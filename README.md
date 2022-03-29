@@ -10,9 +10,9 @@
 - [x] initial Meeting
 
 ## WEEK 01
-- [ ] Explore Aachen dataset
-- [ ] Hloc pipeline
-- [ ] Get a performance of hloc on Aachen
-- [ ] https://arxiv.org/abs/1812.03506
-- [ ] https://arxiv.org/abs/2108.09112
+- [x] Explore Aachen dataset
+- [x] Hloc pipeline
+- [x] Get a performance of hloc on Aachen
+- [x] https://arxiv.org/abs/1812.03506
+- [x] https://arxiv.org/abs/2108.09112
 
