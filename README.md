@@ -16,3 +16,5 @@
 - [x] https://arxiv.org/abs/1812.03506
 - [x] https://arxiv.org/abs/2108.09112
 
+## WEEK 02
+- [] Paper presentation slides (meeting)
