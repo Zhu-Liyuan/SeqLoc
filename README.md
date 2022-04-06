@@ -6,4 +6,6 @@ Image based localization and map update in a quality adaptive manner.
 
 [visualize_model.py](https://github.com/colmap/colmap/blob/dev/scripts/python/visualize_model.py) - Contains visualization function and defines a class for colmap data(points3D,cameras,images)
 
+[read_write_model](https://github.com/Zhu-Liyuan/3DV/blob/master/hloc/utils/read_write_model.py)
+
 More info about the data structure of colmap can be found at https://colmap.github.io/format.html
