@@ -1,5 +1,10 @@
 # 3DV @ Group 16
-Image based localization and map update in a quality adaptive manner.
+Image based localization and map update in a quality adaptive manner. 
+
+Group members: **Jingyan Li, Liyuan Zhu, Han Sun**
+## Prospective pipeline
+<img src="https://github.com/Zhu-Liyuan/3DV/blob/master/doc/3dv.png" height="600"/>
+
 
 ### Some useful [python scripts](https://github.com/colmap/colmap/tree/dev/scripts/python)  to manage colmap database and project files 
 [database.py](https://github.com/colmap/colmap/blob/dev/scripts/python/database.py) - To manipulate colmap database. 
