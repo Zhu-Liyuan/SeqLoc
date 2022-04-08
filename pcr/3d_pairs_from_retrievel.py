@@ -33,17 +33,18 @@ def main():
         feature_paths_refs= [db_feat_desc])
 
     ## 3D-2D correspondences
-    _, images, points3D = read_write_model.read_model(path=query_model/"sfm_superpoint+superglue/", ext='.bin')
+    q_cameras, q_images, q_points3D = read_write_model.read_model(path=query_model/"sfm_superpoint+superglue/", ext='.bin')
+    ref_cameras, ref_iamges, ref_points3D = read_write_model.read_model(path=db_model/"sfm_superpoint+superglue/", ext='.bin')
 
     pairs = parsers.parse_retrieval(output/"qd_pairs.txt")
     pairs = [(q, r) for q, rs in pairs.items() for r in rs]
     hists = []
     # the orders of key_points indices in images.bin and feat.h5 are the same, indices in bin are float(~0.5) while indices in h5 are integer 
-    for i in images:
+    for i in q_images:
         # print(i, images[i].point3D_ids)
-        name = images[i].name
-        xys = images[i].xys
-        recon_mask = (images[i].point3D_ids!=-1) #mask of 2d points that are successfully reconstructed
+        name = q_images[i].name
+        xys = q_images[i].xys
+        recon_mask = (q_images[i].point3D_ids!=-1) #mask of 2d points that are successfully reconstructed
         recon_ids = np.arange(len(xys))[recon_mask] # indices same to above
         recon_2d_pts = xys[recon_ids]
         
@@ -55,9 +56,11 @@ def main():
                 qd_ids = matches[0][:,0] #indices of query_ref matchs in query
                 intx = np.intersect1d(recon_ids, qd_ids) #find the indices that are reconstructed and matched in the image
                 hist[intx]+=1
+        print(sum(hist==5))
         hists.append(hist)
     
-
+    for q_id in q_points3D:
+        q_points3D[q_id]
     print()
 
 
