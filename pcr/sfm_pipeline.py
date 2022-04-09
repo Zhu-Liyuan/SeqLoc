@@ -8,8 +8,8 @@ def main(proj_dir,
     feature_conf,
     matcher_conf):
     
-    img_dir = proj_dir
-    outputs = proj_dir / 'outputs/sfm/'
+    img_dir = Path(proj_dir)/'images'
+    outputs = img_dir / 'outputs/sfm/'
     sfm_pairs = outputs / 'pairs-netvlad.txt'
     sfm_dir = outputs / 'sfm_superpoint+superglue'
 
@@ -28,7 +28,7 @@ def main(proj_dir,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process SfM configurations')
-    parser.add_argument('--proj_dir', type=Path, required=True)
+    parser.add_argument('--proj_dir', type=str, required=True)
     parser.add_argument('--retrieval_conf', type=str, default="netvlad",choices=list(extract_features.confs.keys()))
     parser.add_argument('--feature_conf', type=str, default="superpoint_aachen", choices=list(extract_features.confs.keys()))
     parser.add_argument('--matcher_conf', type=str, default="superglue", choices=list(match_features.confs.keys()))             

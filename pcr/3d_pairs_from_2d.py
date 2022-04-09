@@ -89,14 +89,15 @@ def main():
                            
         if corr_3ds.size!=0: 
             uni_ids, uni_counts = np.unique(corr_3ds, return_counts=True)
-            if max(uni_counts) > 0.85 * sum(uni_counts):
+            post_prob = max(uni_counts)/sum(uni_counts)
+            if post_prob > 0.85 :
                 ref_3d = uni_ids[uni_counts == max(uni_counts)]
-                pairs_3d.append((q_id, int(ref_3d)))
+                pairs_3d.append((q_id, int(ref_3d), post_prob))
                 
     
     # print(pairs_3d)
     with open(output / "3d_pairs.txt", 'w') as f:
-        f.write('\n'.join(' '.join([str(pair[0]), str(pair[1])]) for pair in pairs_3d))
+        f.write('\n'.join(' '.join([str(pair[0]), str(pair[1]), str(pair[2])]) for pair in pairs_3d))
 
 
 if __name__ == "__main__":
