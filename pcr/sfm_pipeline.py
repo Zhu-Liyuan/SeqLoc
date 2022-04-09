@@ -21,7 +21,7 @@ def main(proj_dir,
     pairs_from_retrieval.main(retrieval_path, sfm_pairs, num_matched=5)
 
     feature_path = extract_features.main(feature_conf, img_dir, outputs)
-    match_path = match_features.main(matcher_conf, sfm_pairs, feature_conf['output'], outputs)
+    match_path = match_feaqtures.main(matcher_conf, sfm_pairs, feature_conf['output'], outputs)
 
     model = reconstruction.main(sfm_dir, img_dir, sfm_pairs, feature_path, match_path)
     

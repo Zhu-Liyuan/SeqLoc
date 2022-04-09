@@ -16,10 +16,7 @@ def main():
 
     db_feat_desc = db_model / "feats-superpoint-n4096-r1024.h5"
     query_feat_desc = query_model / "feats-superpoint-n4096-r1024.h5"
-     
-
-    # db_db = database.COLMAPDatabase.connect(db_model/"database.db")
-    # query_db = database.COLMAPDatabase.connect(query_model/"database.db")
+    
     output = data_path / "q_ref_match"
     if not output.exists():
         output.mkdir()
@@ -31,7 +28,7 @@ def main():
     pairs_from_retrieval.main(query_global_desc, output / "qd_pairs.txt", num_matched = 5, db_descriptors=db_global_desc)
 
     ##  Point Feature matching between q and db
-    conf = match_features.confs['superglue-fast']
+    conf = match_features.confs['superglue']
     match_features.match_from_paths(conf = conf,
         pairs_path= output / "qd_pairs.txt", 
         match_path= output / "qd_match.h5", 

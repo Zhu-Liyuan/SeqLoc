@@ -1,7 +1,8 @@
 from pathlib import Path
 import parser
 import numpy as np
-
+from hloc.utils import read_write_model
+import random
 def parse_3d_pairs(path):
     pairs_3d = np.empty((0,3),dtype=np.int32)
     scores_3d = np.empty(0)
@@ -15,15 +16,101 @@ def parse_3d_pairs(path):
     
     return pairs_3d.reshape(-1,2), scores_3d
 
+## compute the scale factor between the ref point cloud and q point cloud
 
-def compute_scale():
-    raise NotImplementedError()
-
-def get_poses_from_corr():
-    raise NotImplementedError()
+def scale_solver(pairs, scores, ref_pts_3d, q_pts_3d):
+    # randomly sample pairs for several times and compute the distances between edges
+    
+    random_samples = 1000 ## a parameter that can be tuned
+    
+    grid_side = np.arange(len(pairs))
+    all_possible_edges = np.array(np.meshgrid(grid_side,grid_side)).reshape(-1, 2)
+        
+    scales = []
+    weights = []
+    for i in range(random_samples):
+        edge = random.choice(all_possible_edges)
+        if edge[0] == edge[1]: continue
+        
+        pair1 = pairs[edge[0]]
+        pair2 = pairs[edge[1]]
+        q_xyz1 = q_pts_3d[pair1[0]].xyz
+        q_xyz2 = q_pts_3d[pair2[0]].xyz
+        ref_xyz1 = ref_pts_3d[pair1[1]].xyz
+        ref_xyz2 = ref_pts_3d[pair2[1]].xyz
+        q_dist = (np.linalg.norm(q_xyz1 - q_xyz2))
+        ref_dist = (np.linalg.norm(ref_xyz1 - ref_xyz2))
+        
+        #update the weight for each obs.
+        scales.append(ref_dist / q_dist)
+        
+        weights.append(np.linalg.norm([scores[edge]]))
+    
+    scales = np.asarray(scales, np.float64).reshape(-1)
+    weights = np.asarray(weights, np.float64).reshape(-1)
+    
+    scale = np.average(scales, weights = weights)
+    return scale
+        
+        
+def fit_pcr(Y, X):
+    ## fit a registration with several samples
+    # zero mean, std 1
+    factor = np.linalg.norm(Y)
+    Y = np.asarray(Y) / factor
+    X = np.asarray(X) / factor
+    y0 = np.mean(Y, axis = 0)
+    x0 = np.mean(X, axis = 0)
+    H = np.zeros((3,3), dtype = np.float64)
+    for i in range(Y.shape[0]):
+        H += (Y[i] - y0).T @ (X[i] - x0)
+    
+    U, D, VT = np.linalg.svd(H)
+    R = (U @ VT).T
+    t = y0 - R @ x0
+    t *= factor
+    residual = np.linalg.norm(Y.T - R @ X.T)
+    
+    return R, t, residual
+    
+def get_poses_from_corr(pairs_3d, scores, q_pts, ref_pts, scale, in_ratio = 0.5, confidence = 0.99, max_iters = 100):
+    # point cloud registration with known correspondences
+    # compute the smallest number of iters that can satisfy the confidence
+    N = np.log(1 - confidence) / np.log(1 - in_ratio ** 8)
+    print('To have a confidence of {} with the inlier ratio {}, we need at least {}'.format(confidence, in_ratio, int(N)))
+    best_res = np.Infinity
+    R0,t0 = 0, 0
+    for i in range(int(N)):
+        samples = random.sample(list(pairs_3d), 8)
+        X = np.empty((8,3))
+        Y = np.empty((8,3))
+        for t in range(8):
+            X = np.append(X, q_pts[samples[t][0]].xyz)
+            Y = np.append(Y, ref_pts[samples[t][1]].xyz)
+        X *= scale
+        R, t, res = fit_pcr(Y.reshape(-1, 3), X.reshape(-1, 3))
+        print(R,t)
+        if res < best_res: 
+            R0 = R
+            t0 = t
+            best_res = res
+    return R0, t0
 
 
 
 if __name__ == '__main__':
-    path = '/home/marvin/ETH_Study/3DV/3DV/datasets/pcr/q_ref_match/3d_pairs.txt'
-    parse_3d_pairs(path)
+    pairs_3d_path = '/home/marvin/ETH_Study/3DV/3DV/datasets/pcr/q_ref_match/3d_pairs.txt'
+    
+    data_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/pcr")
+    db_model = data_path / "db/outputs"
+    query_model = data_path / "query/outputs"
+
+    pairs_3d, scores = parse_3d_pairs(pairs_3d_path)
+    _, _, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
+    _, _, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
+    
+    scale = scale_solver(pairs_3d, scores, ref_points3D, q_points3D)
+    print(scale)
+    R, t = get_poses_from_corr(pairs_3d, scores, q_points3D, ref_points3D, scale)
+    print(R, t)
+    
