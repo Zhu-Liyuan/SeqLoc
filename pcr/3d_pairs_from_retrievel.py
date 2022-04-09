@@ -8,41 +8,41 @@ import h5py
 def main():
     ##  Path define
     data_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/pcr")
-    db_model = data_path/"db/outputs"
-    query_model = data_path/"query/outputs"
+    db_model = data_path / "db/outputs"
+    query_model = data_path / "query/outputs"
 
-    db_global_desc = db_model/"global-feats-netvlad.h5"
-    query_global_desc = query_model/"global-feats-netvlad.h5"
+    db_global_desc = db_model / "global-feats-netvlad.h5"
+    query_global_desc = query_model / "global-feats-netvlad.h5"
 
-    db_feat_desc = db_model/"feats-superpoint-n4096-r1024.h5"
-    query_feat_desc = query_model/"feats-superpoint-n4096-r1024.h5"
+    db_feat_desc = db_model / "feats-superpoint-n4096-r1024.h5"
+    query_feat_desc = query_model / "feats-superpoint-n4096-r1024.h5"
      
 
     # db_db = database.COLMAPDatabase.connect(db_model/"database.db")
     # query_db = database.COLMAPDatabase.connect(query_model/"database.db")
-    output = data_path/"q_ref_match"
+    output = data_path / "q_ref_match"
     if not output.exists():
         output.mkdir()
-    qd_matches = output/"qd_match.h5"
+    qd_matches = output / "qd_match.h5"
     
     assert db_feat_desc.exists()*db_global_desc.exists()*query_feat_desc.exists()*query_global_desc.exists(), "Some feature files are not found!"
 
     ##  Generate image matches, 5 match per query image
-    pairs_from_retrieval.main(query_global_desc, output/"qd_pairs.txt", num_matched = 5, db_descriptors=db_global_desc)
+    pairs_from_retrieval.main(query_global_desc, output / "qd_pairs.txt", num_matched = 5, db_descriptors=db_global_desc)
 
     ##  Point Feature matching between q and db
     conf = match_features.confs['superglue-fast']
     match_features.match_from_paths(conf = conf,
-        pairs_path= output/"qd_pairs.txt", 
-        match_path= output/"qd_match.h5", 
+        pairs_path= output / "qd_pairs.txt", 
+        match_path= output / "qd_match.h5", 
         feature_path_q= query_feat_desc, 
         feature_paths_refs= [db_feat_desc])
 
     ## 3D-2D correspondences
-    q_cameras, q_images, q_points3D = read_write_model.read_model(path=query_model/"sfm_superpoint+superglue/", ext='.bin')
-    ref_cameras, ref_images, ref_points3D = read_write_model.read_model(path=db_model/"sfm_superpoint+superglue/", ext='.bin')
+    q_cameras, q_images, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
+    ref_cameras, ref_images, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
 
-    pairs = parsers.parse_retrieval(output/"qd_pairs.txt")
+    pairs = parsers.parse_retrieval(output / "qd_pairs.txt")
     pairs = [(q, r) for q, rs in pairs.items() for r in rs]
     hists = []
     # the orders of key_points indices in images.bin and feat.h5 are the same, indices in bin are float(~0.5) while indices in h5 are integer 
@@ -95,10 +95,8 @@ def main():
                 
     
     # print(pairs_3d)
-    with open(output/"3d_pairs.txt", 'w') as f:
+    with open(output / "3d_pairs.txt", 'w') as f:
         f.write('\n'.join(' '.join([str(pair[0]), str(pair[1])]) for pair in pairs_3d))
-                        
-                        
 
 
 if __name__ == "__main__":
