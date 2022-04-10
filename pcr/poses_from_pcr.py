@@ -25,7 +25,6 @@ def scale_solver(pairs, scores, ref_pts_3d, q_pts_3d):
     
     grid_side = np.arange(len(pairs))
     all_possible_edges = np.array(np.meshgrid(grid_side,grid_side)).reshape(-1, 2)
-        
     scales = []
     weights = []
     for i in range(random_samples):
@@ -48,7 +47,6 @@ def scale_solver(pairs, scores, ref_pts_3d, q_pts_3d):
     
     scales = np.asarray(scales, np.float64).reshape(-1)
     weights = np.asarray(weights, np.float64).reshape(-1)
-    
     scale = np.average(scales, weights = weights)
     return scale
         
@@ -76,26 +74,30 @@ def fit_pcr(Y, X):
 def get_poses_from_corr(pairs_3d, scores, q_pts, ref_pts, scale, in_ratio = 0.5, confidence = 0.99, max_iters = 100):
     # point cloud registration with known correspondences
     # compute the smallest number of iters that can satisfy the confidence
-    N = np.log(1 - confidence) / np.log(1 - in_ratio ** 8)
+    N = np.log(1 - confidence) / np.log(1 - in_ratio ** 3)
     print('To have a confidence of {} with the inlier ratio {}, we need at least {}'.format(confidence, in_ratio, int(N)))
     best_res = np.Infinity
     R0,t0 = 0, 0
     for i in range(int(N)):
-        samples = random.sample(list(pairs_3d), 8)
-        X = np.empty((8,3))
-        Y = np.empty((8,3))
-        for t in range(8):
+        samples = random.sample(list(pairs_3d), 3)
+        X = np.empty((3,3))
+        Y = np.empty((3,3))
+        for t in range(3):
             X = np.append(X, q_pts[samples[t][0]].xyz)
             Y = np.append(Y, ref_pts[samples[t][1]].xyz)
         X *= scale
         R, t, res = fit_pcr(Y.reshape(-1, 3), X.reshape(-1, 3))
-        print(R,t)
+        # print(R,t)
         if res < best_res: 
             R0 = R
             t0 = t
             best_res = res
     return R0, t0
 
+def write_3dpts_corr(pairs_3d, ref_pts, q_pts, pair_dir, scale):
+    with open(pair_dir, 'w') as f:
+        f.write('\n'.join(' '.join([str(q_pts[pair[0]].xyz).replace(' [', '').replace('[', '').replace(']', ''), str(ref_pts[pair[1]].xyz).replace(' [', '').replace('[', '').replace(']', '')]) for pair in pairs_3d))
+    
 
 
 if __name__ == '__main__':
@@ -112,5 +114,6 @@ if __name__ == '__main__':
     scale = scale_solver(pairs_3d, scores, ref_points3D, q_points3D)
     print(scale)
     R, t = get_poses_from_corr(pairs_3d, scores, q_points3D, ref_points3D, scale)
-    print(R, t)
+    # print(R, t)
+    write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, data_path / "q_ref_match/3d_corr.txt", scale)
     
