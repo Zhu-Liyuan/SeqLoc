@@ -3,6 +3,8 @@ import parser
 import numpy as np
 from hloc.utils import read_write_model
 import random
+import teaser_pcr
+
 def parse_3d_pairs(path):
     pairs_3d = np.empty((0,3),dtype=np.int32)
     scores_3d = np.empty(0)
@@ -11,6 +13,7 @@ def parse_3d_pairs(path):
             if len(p) == 0:
                 continue
             q, r, prob = p.split()
+            if int(q) == -1 or int(r) == -1: continue
             pairs_3d = np.append(pairs_3d, np.asarray([q,r], dtype=np.int32))
             scores_3d = np.append(scores_3d, np.asarray([prob], dtype=np.float64))
     
@@ -71,7 +74,7 @@ def fit_pcr(Y, X):
     
     return R, t, residual
     
-def get_poses_from_corr(pairs_3d, scores, q_pts, ref_pts, scale, in_ratio = 0.5, confidence = 0.99, max_iters = 100):
+def ransac_pcr(pairs_3d, scores, q_pts, ref_pts, scale, in_ratio = 0.5, confidence = 0.99, max_iters = 100):
     # point cloud registration with known correspondences
     # compute the smallest number of iters that can satisfy the confidence
     N = np.log(1 - confidence) / np.log(1 - in_ratio ** 3)
@@ -94,26 +97,32 @@ def get_poses_from_corr(pairs_3d, scores, q_pts, ref_pts, scale, in_ratio = 0.5,
             best_res = res
     return R0, t0
 
-def write_3dpts_corr(pairs_3d, ref_pts, q_pts, pair_dir, scale):
+def write_3dpts_corr(pairs_3d, ref_pts, q_pts, pair_dir):
     with open(pair_dir, 'w') as f:
         f.write('\n'.join(' '.join([str(q_pts[pair[0]].xyz).replace(' [', '').replace('[', '').replace(']', ''), str(ref_pts[pair[1]].xyz).replace(' [', '').replace('[', '').replace(']', '')]) for pair in pairs_3d))
-    
 
 
 if __name__ == '__main__':
-    pairs_3d_path = '/home/marvin/ETH_Study/3DV/3DV/datasets/pcr/q_ref_match/3d_pairs.txt'
     
-    data_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/pcr")
-    db_model = data_path / "db/outputs"
+    
+    data_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/test1")
+    pairs_3d_path = data_path/"q_ref_match/3d_pairs.txt"
+    
+    db_model = data_path / "ref/outputs"
     query_model = data_path / "query/outputs"
 
     pairs_3d, scores = parse_3d_pairs(pairs_3d_path)
     _, _, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
     _, _, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
     
-    scale = scale_solver(pairs_3d, scores, ref_points3D, q_points3D)
-    print(scale)
-    R, t = get_poses_from_corr(pairs_3d, scores, q_points3D, ref_points3D, scale)
+    # scale = scale_solver(pairs_3d, scores, ref_points3D, q_points3D)
+    # print(scale)
+    # R, t = ransac_pcr(pairs_3d, scores, q_points3D, ref_points3D, scale)
     # print(R, t)
-    write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, data_path / "q_ref_match/3d_corr.txt", scale)
+    
+    corr_3d_path = data_path / "q_ref_match/3d_corr.txt"
+    write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, corr_3d_path)
+    query_pcd = data_path/"query/outputs/poind_cloud.ply"
+    ref_pcd = data_path/"ref/outputs/poind_cloud.ply"
+    teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd))
     

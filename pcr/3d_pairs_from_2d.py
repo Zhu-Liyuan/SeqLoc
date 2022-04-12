@@ -7,8 +7,8 @@ import h5py
 
 def main():
     ##  Path define
-    data_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/pcr")
-    db_model = data_path / "db/outputs"
+    data_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/test1")
+    db_model = data_path / "ref/outputs"
     query_model = data_path / "query/outputs"
 
     db_global_desc = db_model / "global-feats-netvlad.h5"
@@ -62,7 +62,7 @@ def main():
         hists.append(hist)
     
     pairs_3d = []
-    NUM_2D_PTS = 4 #parameter that needs experiment
+    NUM_2D_PTS = 3 #parameter that needs experiment
     # hfile_qr_matches = h5py.File(str(qd_matches), 'r')
     hfile_ref_kpts = h5py.File(str(db_feat_desc), 'r')
     # generate ref_image name list for fast indexing
