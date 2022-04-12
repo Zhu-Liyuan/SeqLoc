@@ -1,7 +1,7 @@
 from pathlib import Path
 from hloc import extract_features, match_features, reconstruction, visualization, pairs_from_retrieval
 import argparse
-
+from utils import convert_bin_to_ply
 
 def main(proj_dir,
     retrieval_conf, 
@@ -9,7 +9,7 @@ def main(proj_dir,
     matcher_conf):
     
     img_dir = Path(proj_dir)/'images'
-    outputs = img_dir / 'outputs/sfm/'
+    outputs = Path(proj_dir) / 'outputs/'
     sfm_pairs = outputs / 'pairs-netvlad.txt'
     sfm_dir = outputs / 'sfm_superpoint+superglue'
 
@@ -21,9 +21,11 @@ def main(proj_dir,
     pairs_from_retrieval.main(retrieval_path, sfm_pairs, num_matched=5)
 
     feature_path = extract_features.main(feature_conf, img_dir, outputs)
-    match_path = match_feaqtures.main(matcher_conf, sfm_pairs, feature_conf['output'], outputs)
+    match_path = match_features.main(matcher_conf, sfm_pairs, feature_conf['output'], outputs)
 
     model = reconstruction.main(sfm_dir, img_dir, sfm_pairs, feature_path, match_path)
+    
+    convert_bin_to_ply(sfm_dir, sfm_dir/'../point_cloud.ply')
     
 
 if __name__ == "__main__":
