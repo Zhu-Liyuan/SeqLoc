@@ -8,15 +8,19 @@
         ├── matches_*.h5(feature matches)
         ├── flobal_feats_*.h5
         ├── pairs_netlad.txt
+        ├── point_cloud.ply
         ├── sfm
-            ├──points3D.bin
-            ├──cameras.bin
-            ├──images.bin
-    ├── Image1.JPG
-    ├── Image2.JPG
-    .
-    .
-    .
-    ├── ImageX.JPG
+            ├── points3D.bin
+            ├── cameras.bin
+            ├── images.bin
+            ├── database.bin
+            ├── models
+    ├── images
+        ├── Image1.JPG
+        ├── Image2.JPG
+        .
+        .
+        .
+        ├── ImageX.JPG
         
 ```
