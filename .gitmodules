@@ -11,3 +11,6 @@
 [submodule "third_party/r2d2"]
 	path = third_party/r2d2
 	url = https://github.com/naver/r2d2.git
+[submodule "third_party/TEASER-plusplus"]
+	path = third_party/TEASER-plusplus
+	url = https://github.com/MIT-SPARK/TEASER-plusplus
