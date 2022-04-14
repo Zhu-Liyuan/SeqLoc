@@ -91,17 +91,17 @@ def main(corr_path, pcd_1, pcd_2, VISUALIZE = True):
         o3d.visualization.draw_geometries([A_pcd_T_teaser,B_pcd])
     
     # icp refinement using result from teaser
-    icp_sol = o3d.registration.registration_icp(
-      A_pcd, B_pcd, NOISE_BOUND, T_teaser,
-      o3d.registration.TransformationEstimationPointToPoint(),
-      o3d.registration.ICPConvergenceCriteria(max_iteration=100))
-    T_icp = icp_sol.transformation
+    # icp_sol = o3d.registration.registration_icp(
+    #   A_pcd, B_pcd, 0.04, T_teaser,
+    #   o3d.registration.TransformationEstimationPointToPoint(),
+    #   o3d.registration.ICPConvergenceCriteria(max_iteration=100))
+    # T_icp = icp_sol.transformation
     
-    if VISUALIZE:
-        A_pcd_T_icp = copy.deepcopy(A_pcd).transform(T_icp)
-        o3d.visualization.draw_geometries([A_pcd_T_icp,B_pcd])
+    # if VISUALIZE:
+    #     A_pcd_T_icp = copy.deepcopy(A_pcd).transform(T_icp)
+    #     o3d.visualization.draw_geometries([A_pcd_T_icp,B_pcd])
     
-    return T_icp
+    return T_teaser
     
     
 
@@ -110,6 +110,7 @@ if __name__ == '__main__':
     corr_path = proj_path/'q_ref_match/3d_corr.txt'
     query_pcd = proj_path/'query/outputs/point_cloud.ply'
     ref_pcd = proj_path/'ref/outputs/point_cloud.ply'
-    main(str(corr_path), str(query_pcd), str(ref_pcd))
+    T = main(str(corr_path), str(query_pcd), str(ref_pcd))
+    print(T)
     
     

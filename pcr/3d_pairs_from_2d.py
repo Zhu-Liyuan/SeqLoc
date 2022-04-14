@@ -82,6 +82,7 @@ def main():
                         ref_id = matches[matches[:,0] == pt_id, 1]
                         ref_image = ref_images[ref_names.index(r) + 1] ## there might be bugs of images indexing
                         # corr_3ds.append(ref_image.point3D_ids[ref_id])
+                        if ref_id == -1: continue
                         corr_3ds = np.append(corr_3ds, np.array(ref_image.point3D_ids[ref_id]))
                            
         if corr_3ds.size!=0: 

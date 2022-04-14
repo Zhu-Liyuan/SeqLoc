@@ -5,6 +5,7 @@ from hloc.utils import read_write_model
 import random
 import teaser_pcr
 
+
 def parse_3d_pairs(path):
     pairs_3d = np.empty((0,3),dtype=np.int32)
     scores_3d = np.empty(0)
@@ -100,7 +101,28 @@ def ransac_pcr(pairs_3d, scores, q_pts, ref_pts, scale, in_ratio = 0.5, confiden
 def write_3dpts_corr(pairs_3d, ref_pts, q_pts, pair_dir):
     with open(pair_dir, 'w') as f:
         f.write('\n'.join(' '.join([str(q_pts[pair[0]].xyz).replace(' [', '').replace('[', '').replace(']', ''), str(ref_pts[pair[1]].xyz).replace(' [', '').replace('[', '').replace(']', '')]) for pair in pairs_3d))
+        
 
+def localizer(images, T, output):
+    camera_poses = []
+    for image in images:
+        rmtx = read_write_model.qvec2rotmat(images[image].qvec)
+        tvec = images[image].tvec
+        rmtx = T[0:3, 0:3] @ rmtx
+        qvec = read_write_model.rotmat2qvec(rmtx)
+        tvec = T @ np.append(tvec, 1.0)
+        # tvec /= tvec[-1]
+        camera_poses.append([images[image].name, qvec, tvec[:3]])
+    
+    if not output.exists(): output.touch()
+    with open(output, 'w') as f:
+        for pose in camera_poses:
+            qvec = ' '.join(map(str, pose[1]))
+            tvec = ' '.join(map(str, pose[2]))
+            f.write(f'{pose[0]} {qvec} {tvec}\n')
+    return camera_poses
+    
+        
 
 if __name__ == '__main__':
     
@@ -112,17 +134,17 @@ if __name__ == '__main__':
     query_model = data_path / "query/outputs"
 
     pairs_3d, scores = parse_3d_pairs(pairs_3d_path)
-    _, _, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
+    _, q_images, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
     _, _, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
     
     # scale = scale_solver(pairs_3d, scores, ref_points3D, q_points3D)
     # print(scale)
     # R, t = ransac_pcr(pairs_3d, scores, q_points3D, ref_points3D, scale)
     # print(R, t)
-    
     corr_3d_path = data_path / "q_ref_match/3d_corr.txt"
     write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, corr_3d_path)
-    query_pcd = data_path/"query/outputs/poind_cloud.ply"
-    ref_pcd = data_path/"ref/outputs/poind_cloud.ply"
-    teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd))
+    query_pcd = data_path/"query/outputs/point_cloud.ply"
+    ref_pcd = data_path/"ref/outputs/point_cloud.ply"
+    T = teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd), VISUALIZE=False)
+    localizer(q_images, T, query_model/'localization_results.txt')
     
