@@ -15,7 +15,7 @@ def Rt2T(R,t):
     T[:3,3] = t
     return T
 
-def get_teaser_solver(noise_bound = 0.02):
+def get_teaser_solver(noise_bound = 0.002):
     solver_params = teaserpp_python.RobustRegistrationSolver.Params()
     solver_params.cbar2 = 1.0
     solver_params.noise_bound = noise_bound
@@ -25,7 +25,7 @@ def get_teaser_solver(noise_bound = 0.02):
     solver_params.rotation_tim_graph = \
         teaserpp_python.RobustRegistrationSolver.INLIER_GRAPH_FORMULATION.CHAIN
     solver_params.rotation_estimation_algorithm = \
-        teaserpp_python.RobustRegistrationSolver.ROTATION_ESTIMATION_ALGORITHM.GNC_TLS
+        teaserpp_python.RobustRegistrationSolver.ROTATION_ESTIMATION_ALGORITHM.FGR
     solver_params.rotation_gnc_factor = 1.4
     solver_params.rotation_max_iterations = 1000
     solver_params.rotation_cost_threshold = 1e-16
@@ -77,7 +77,7 @@ def main(corr_path, pcd_1, pcd_2, VISUALIZE = True):
         o3d.visualization.draw_geometries([A_pcd,B_pcd,line_set])
     
     #Teaser solver for pcr
-    NOISE_BOUND = 0.02
+    NOISE_BOUND = 0.1
     teaser_solver = get_teaser_solver(NOISE_BOUND)
     teaser_solver.solve(A_corr,B_corr)
     solution = teaser_solver.getSolution()
@@ -93,15 +93,14 @@ def main(corr_path, pcd_1, pcd_2, VISUALIZE = True):
     # icp refinement using result from teaser
     # icp_sol = o3d.registration.registration_icp(
     #   A_pcd, B_pcd, 0.04, T_teaser,
-    #   o3d.registration.TransformationEstimationPointToPoint(),
-    #   o3d.registration.ICPConvergenceCriteria(max_iteration=100))
+    #   o3d.registration.TransformationEstimationPointToPoint())
     # T_icp = icp_sol.transformation
     
     # if VISUALIZE:
     #     A_pcd_T_icp = copy.deepcopy(A_pcd).transform(T_icp)
     #     o3d.visualization.draw_geometries([A_pcd_T_icp,B_pcd])
     
-    return T_teaser
+    return T_teaser, scale_teaser
     
     
 

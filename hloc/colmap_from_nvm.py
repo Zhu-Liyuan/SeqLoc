@@ -131,7 +131,6 @@ def read_nvm_model(
         qvec = np.array([qw, qx, qy, qz], float)
         c = np.array([cx, cy, cz], float)
         t = camera_center_to_translation(c, qvec)
-
         if i in image_idx_to_keypoints:
             # NVM only stores triangulated 2D keypoints: add dummy ones
             keypoints = image_idx_to_keypoints[i]
@@ -154,7 +153,7 @@ def read_nvm_model(
             qvec=qvec,
             tvec=t,
             camera_id=camera_ids[name],
-            name=name,
+            name=name,#.split('/')[-1],
             xys=xys,
             point3D_ids=point3D_ids)
         images[image_id] = image

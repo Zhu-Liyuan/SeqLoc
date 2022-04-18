@@ -1,9 +1,11 @@
 from pathlib import Path
 import parser
+from matplotlib import scale
 import numpy as np
-from hloc.utils import read_write_model
+from hloc.utils import read_write_model, parsers
 import random
 import teaser_pcr
+
 
 
 def parse_3d_pairs(path):
@@ -100,26 +102,29 @@ def ransac_pcr(pairs_3d, scores, q_pts, ref_pts, scale, in_ratio = 0.5, confiden
 
 def write_3dpts_corr(pairs_3d, ref_pts, q_pts, pair_dir):
     with open(pair_dir, 'w') as f:
-        f.write('\n'.join(' '.join([str(q_pts[pair[0]].xyz).replace(' [', '').replace('[', '').replace(']', ''), str(ref_pts[pair[1]].xyz).replace(' [', '').replace('[', '').replace(']', '')]) for pair in pairs_3d))
-        
+        for pair in pairs_3d:
+            coor1 = ' '.join(map(str, q_pts[pair[0]].xyz))
+            coor2 = ' '.join(map(str, ref_pts[pair[1]].xyz))
+            f.write(f'{coor1} {coor2}\n')
 
-def localizer(images, T, output):
+def localizer(images, T, scale, output):
     camera_poses = []
     for image in images:
         rmtx = read_write_model.qvec2rotmat(images[image].qvec)
-        tvec = images[image].tvec
-        rmtx = T[0:3, 0:3] @ rmtx
-        qvec = read_write_model.rotmat2qvec(rmtx)
-        tvec = T @ np.append(tvec, 1.0)
-        # tvec /= tvec[-1]
-        camera_poses.append([images[image].name, qvec, tvec[:3]])
+        coor = - rmtx.T @ images[image].tvec
+        rmtx = T[0:3, 0:3] / scale @ rmtx.T
+        qvec = read_write_model.rotmat2qvec(rmtx.T)
+        coor = T @ np.append(coor, 1.0)
+        coor /= coor[-1]
+        coor = - rmtx.T @ coor[:3]
+        camera_poses.append([images[image].name, qvec, coor])
     
     if not output.exists(): output.touch()
     with open(output, 'w') as f:
         for pose in camera_poses:
             qvec = ' '.join(map(str, pose[1]))
-            tvec = ' '.join(map(str, pose[2]))
-            f.write(f'{pose[0]} {qvec} {tvec}\n')
+            coor = ' '.join(map(str, pose[2]))
+            f.write(f'{pose[0]} {qvec} {coor}\n')
     return camera_poses
     
         
@@ -127,8 +132,8 @@ def localizer(images, T, output):
 if __name__ == '__main__':
     
     
-    data_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/test1")
-    pairs_3d_path = data_path/"q_ref_match/3d_pairs.txt"
+    data_path = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp")
+    pairs_3d_path = data_path/"query/q_ref_match/3d_pairs.txt"
     
     db_model = data_path / "ref/outputs"
     query_model = data_path / "query/outputs"
@@ -141,10 +146,10 @@ if __name__ == '__main__':
     # print(scale)
     # R, t = ransac_pcr(pairs_3d, scores, q_points3D, ref_points3D, scale)
     # print(R, t)
-    corr_3d_path = data_path / "q_ref_match/3d_corr.txt"
+    corr_3d_path = query_model / "../q_ref_match/3d_corr.txt"
     write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, corr_3d_path)
     query_pcd = data_path/"query/outputs/point_cloud.ply"
     ref_pcd = data_path/"ref/outputs/point_cloud.ply"
-    T = teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd), VISUALIZE=False)
-    localizer(q_images, T, query_model/'localization_results.txt')
+    T, t_scale = teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd), VISUALIZE=True)
+    localizer(q_images, T, t_scale,  query_model/'../localization_results.txt')
     

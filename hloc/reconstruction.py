@@ -6,9 +6,11 @@ from pathlib import Path
 import pycolmap
 
 from . import logger
-from .utils.database import COLMAPDatabase
+from .utils.database import COLMAPDatabase, array_to_blob
 from .triangulation import (
     import_features, import_matches, geometric_verification, OutputCapture)
+import numpy as np
+from hloc.utils import parsers
 
 
 def create_empty_db(database_path):
@@ -31,6 +33,26 @@ def import_images(image_dir, database_path, camera_mode, image_list=None):
         pycolmap.import_images(database_path, image_dir, camera_mode,
                                image_list=image_list or [])
 
+def import_intrinsics(database_path, intrinsics_path):
+    database_path = Path(database_path)
+    intrinsics_path = Path(intrinsics_path)
+    all_query_images = parsers.parse_image_list(intrinsics_path, with_intrinsics=True)
+    db = COLMAPDatabase.connect(database_path)
+    q_images = db.execute("SELECT * FROM images")
+    q_cameras = db.execute("SELECT * FROM cameras")
+    for q_image in q_images:
+        for img in all_query_images:
+            if q_image[1] in img[0]:
+                param = db.execute((f"SELECT * FROM cameras WHERE camera_id={q_image[0]}"))
+                camera_id, model, width, height, _, _ = next(param)
+                new_params = np.asarray(img[1].params, dtype=np.float64)
+                db.execute(f"DELETE FROM cameras WHERE camera_id={q_image[0]}")
+                # db.execute(f"UPDATE cameras SET params={new_blob} WHERE camera_id={q_image[0]}")
+                db.execute( "INSERT INTO cameras VALUES (?, ?, ?, ?, ?, ?)",
+                        (camera_id, model, width, height, array_to_blob(new_params),
+                        0))
+    db.commit()
+    db.close()
 
 def get_image_ids(database_path):
     db = COLMAPDatabase.connect(database_path)
@@ -78,7 +100,7 @@ def run_reconstruction(sfm_dir, database_path, image_dir, verbose=False):
 def main(sfm_dir, image_dir, pairs, features, matches,
          camera_mode=pycolmap.CameraMode.AUTO, verbose=False,
          skip_geometric_verification=False, min_match_score=None,
-         image_list: Optional[List[str]] = None):
+         image_list: Optional[List[str]] = None, intrinsics_path=None):
 
     assert features.exists(), features
     assert pairs.exists(), pairs
@@ -93,6 +115,7 @@ def main(sfm_dir, image_dir, pairs, features, matches,
     import_features(image_ids, database, features)
     import_matches(image_ids, database, pairs, matches,
                    min_match_score, skip_geometric_verification)
+    import_intrinsics(database, intrinsics_path=intrinsics_path)
     if not skip_geometric_verification:
         geometric_verification(database, pairs, verbose)
     reconstruction = run_reconstruction(sfm_dir, database, image_dir, verbose)
