@@ -38,12 +38,11 @@ def create_db_from_model(reconstruction, database_path, image_path):
 
     img_loader = ImageDataset(image_path, confs['superpoint_aachen']['preprocessing'])
     img_names = [img['name'] for img in img_loader]
-    camera_ids = []
+    
     for i, image in reconstruction.images.items():
         if image.name in img_names:
             db.add_image(image.name, image.camera_id, image_id=i)
-            camera_ids.append(image.camera_id)
-
+            
     for i, camera in reconstruction.cameras.items():
         db.add_camera(
             camera.model_id, camera.width, camera.height, camera.params,
@@ -51,6 +50,7 @@ def create_db_from_model(reconstruction, database_path, image_path):
         
     db.commit()
     db.close()
+    
     return {image.name: i for i, image in reconstruction.images.items() if image.name in img_names}
 
 
@@ -78,18 +78,18 @@ def import_matches(image_ids, database_path, pairs_path, matches_path,
 
     matched = set()
     for name0, name1 in tqdm(pairs): 
-        # if name0 in image_ids and name1 in image_ids:
-        id0, id1 = image_ids[name0], image_ids[name1]
-        if len({(id0, id1), (id1, id0)} & matched) > 0:
-            continue
-        matches, scores = get_matches(matches_path, name0, name1)
-        if min_match_score:
-            matches = matches[scores > min_match_score]
-        db.add_matches(id0, id1, matches)
-        matched |= {(id0, id1), (id1, id0)}
+        if (name0 in image_ids) and (name1 in image_ids):
+            id0, id1 = image_ids[name0], image_ids[name1]
+            if len({(id0, id1), (id1, id0)} & matched) > 0:
+                continue
+            matches, scores = get_matches(matches_path, name0, name1)
+            if min_match_score:
+                matches = matches[scores > min_match_score]
+            db.add_matches(id0, id1, matches)
+            matched |= {(id0, id1), (id1, id0)}
 
-        if skip_geometric_verification:
-            db.add_two_view_geometry(id0, id1, matches)
+            if skip_geometric_verification:
+                db.add_two_view_geometry(id0, id1, matches)
 
     db.commit()
     db.close()
