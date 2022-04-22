@@ -10,11 +10,11 @@ def image_from_name(images, name):
         if images[item].name == name:
             return images[item]
     
-def main():
+def main(db_model, query_model):
     ##  Path define
-    data_path = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp")
-    db_model = data_path / "ref/outputs"
-    query_model = data_path / "query/outputs"
+    # data_path = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp")
+    # db_model = data_path / "ref/outputs"
+    # query_model = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query/3/outputs")
 
     db_global_desc = db_model / "global-feats-netvlad.h5"
     query_global_desc = query_model / "global-feats-netvlad.h5"
@@ -22,7 +22,7 @@ def main():
     db_feat_desc = db_model / "feats-superpoint-n4096-r1024.h5"
     query_feat_desc = query_model / "feats-superpoint-n4096-r1024.h5"
     
-    output = data_path / "query/q_ref_match"
+    output = query_model / ".."
     if not output.exists():
         output.mkdir()
     qd_matches = output / "qd_match.h5"
@@ -41,9 +41,9 @@ def main():
         feature_paths_refs= [db_feat_desc])
 
     ## 3D-2D correspondences
-    q_cameras, q_images, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
-    ref_cameras, ref_images, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
-
+    _, q_images, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
+    # ref_cameras, ref_images, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
+    ref_images = read_write_model.read_images_binary(db_model / "sfm_superpoint+superglue/images.bin")
     pairs = parsers.parse_retrieval(output / "qd_pairs.txt")
     pairs = [(q, r) for q, rs in pairs.items() for r in rs]
     hists = []
@@ -71,7 +71,7 @@ def main():
     # hfile_qr_matches = h5py.File(str(qd_matches), 'r')
     hfile_ref_kpts = h5py.File(str(db_feat_desc), 'r')
     # generate ref_image name list for fast indexing
-    ref_names = [ref_images[i].name for i in ref_images]
+    # ref_names = [ref_images[i].name for i in ref_images]
     ## TO DO: rewrite find_matches, get_keypoints into class
     print('Generate 3d point pairs:')
     for q_id in tqdm(q_points3D):

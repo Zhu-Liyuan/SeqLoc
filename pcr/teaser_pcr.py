@@ -25,7 +25,7 @@ def get_teaser_solver(noise_bound = 0.002):
     solver_params.rotation_tim_graph = \
         teaserpp_python.RobustRegistrationSolver.INLIER_GRAPH_FORMULATION.CHAIN
     solver_params.rotation_estimation_algorithm = \
-        teaserpp_python.RobustRegistrationSolver.ROTATION_ESTIMATION_ALGORITHM.FGR
+        teaserpp_python.RobustRegistrationSolver.ROTATION_ESTIMATION_ALGORITHM.GNC_TLS
     solver_params.rotation_gnc_factor = 1.4
     solver_params.rotation_max_iterations = 1000
     solver_params.rotation_cost_threshold = 1e-16

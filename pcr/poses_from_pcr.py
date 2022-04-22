@@ -127,29 +127,31 @@ def localizer(images, T, scale, output):
             f.write(f'{pose[0]} {qvec} {coor}\n')
     return camera_poses
     
-        
-
-if __name__ == '__main__':
+def main(db_model,query_model):
+    # data_path = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp")
     
-    
-    data_path = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp")
-    pairs_3d_path = data_path/"query/q_ref_match/3d_pairs.txt"
-    
-    db_model = data_path / "ref/outputs"
-    query_model = data_path / "query/outputs"
+    # db_model = data_path / "ref/outputs"
+    # query_model = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query/3/outputs/")
+    pairs_3d_path = query_model/'../3d_pairs.txt'
 
     pairs_3d, scores = parse_3d_pairs(pairs_3d_path)
     _, q_images, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
-    _, _, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
-    
+    # _, _, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
+    ref_points3D = read_write_model.read_points3D_binary(db_model / "sfm_superpoint+superglue/points3D.bin")
     # scale = scale_solver(pairs_3d, scores, ref_points3D, q_points3D)
     # print(scale)
     # R, t = ransac_pcr(pairs_3d, scores, q_points3D, ref_points3D, scale)
     # print(R, t)
-    corr_3d_path = query_model / "../q_ref_match/3d_corr.txt"
+    corr_3d_path = query_model / "../3d_corr.txt"
     write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, corr_3d_path)
-    query_pcd = data_path/"query/outputs/point_cloud.ply"
-    ref_pcd = data_path/"ref/outputs/point_cloud.ply"
+    query_pcd = query_model/"point_cloud.ply"
+    ref_pcd = db_model/"point_cloud.ply"
     T, t_scale = teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd), VISUALIZE=True)
     localizer(q_images, T, t_scale,  query_model/'../localization_results.txt')
+    
+
+if __name__ == '__main__':
+    main()
+    
+    
     

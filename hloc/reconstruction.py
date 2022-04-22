@@ -11,7 +11,7 @@ from .triangulation import (
     import_features, import_matches, geometric_verification, OutputCapture)
 import numpy as np
 from hloc.utils import parsers, read_write_model
-
+from tqdm import tqdm
 
 def create_empty_db(database_path):
     if database_path.exists():
@@ -34,13 +34,14 @@ def import_images(image_dir, database_path, camera_mode, image_list=None):
                                image_list=image_list or [])
 
 def import_intrinsics(database_path, intrinsics_path):
+    logger.info('Importing intrinsics into the database...')
     database_path = Path(database_path)
     intrinsics_path = Path(intrinsics_path)
     all_query_images = parsers.parse_image_list(intrinsics_path, with_intrinsics=True)
     db = COLMAPDatabase.connect(database_path)
     q_images = db.execute("SELECT * FROM images")
-    q_cameras = db.execute("SELECT * FROM cameras")
-    for q_image in q_images:
+    
+    for q_image in tqdm(q_images):
         for img in all_query_images:
             if q_image[1] in img[0]:
                 param = db.execute((f"SELECT * FROM cameras WHERE camera_id={q_image[0]}"))
@@ -55,21 +56,17 @@ def import_intrinsics(database_path, intrinsics_path):
     db.close()
 
 def import_prior_poses(database_path, reference_model):
+    logger.info('Importing prior poses into the database...')
     database_path = Path(database_path)
-    _, ref_images, _ = read_write_model.read_model(path=reference_model, ext='.bin')
+    # _, ref_images, _ = read_write_model.read_model(path=reference_model, ext='.bin')
+    ref_images = read_write_model.read_images_binary(reference_model/'images.bin')
     db = COLMAPDatabase.connect(database_path)
     q_images = db.execute("SELECT * FROM images")
     img_names = [q_image[1] for q_image in q_images]
-    for _, ref_image in ref_images.items():
+    for _, ref_image in tqdm(ref_images.items()):
         if ref_image.name in img_names:
             db_img = db.execute(f"SELECT * FROM images WHERE name='{ref_image.name}'")
             db_img = next(db_img)
-            # db.execute(f"DELETE FROM images WHERE name='{ref_image.name}'")
-            # db.execute(
-            #      '''INSERT INTO images VALUES 
-            #      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-            # (db_img[0], db_img[1], db_img[2], ref_image.qvec[0], ref_image.qvec[1], ref_image.qvec[2],
-            #  ref_image.qvec[3], ref_image.tvec[0], ref_image.tvec[1], ref_image.tvec[2]))
             db.execute(f'''UPDATE images
                         SET prior_qw = {ref_image.qvec[0]},
                             prior_qx = {ref_image.qvec[1]},
