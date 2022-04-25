@@ -95,11 +95,21 @@ def run_reconstruction(sfm_dir, database_path, image_dir, verbose=False):
     models_path = sfm_dir / 'models'
     models_path.mkdir(exist_ok=True, parents=True)
     logger.info('Running 3D reconstruction...')
+    sfm_opts = pycolmap.IncrementalMapperOptions()
+    sfm_opts.num_threads = min(multiprocessing.cpu_count(), 16)
+    sfm_opts.ba_refine_extra_params = True
+    sfm_opts.ba_refine_focal_length = True
+    sfm_opts.ba_global_use_pba = True
     with OutputCapture(verbose):
         with pycolmap.ostream():
             reconstructions = pycolmap.incremental_mapping(
-                database_path, image_dir, models_path,
-                num_threads=min(multiprocessing.cpu_count(), 16))
+                database_path, image_dir, models_path, options = sfm_opts
+                )
+    # with OutputCapture(verbose):
+    #     with pycolmap.ostream():
+    #         reconstructions = pycolmap.incremental_mapping(
+    #             database_path, image_dir, models_path,
+    #             num_threads=min(multiprocessing.cpu_count(), 16))
 
     if len(reconstructions) == 0:
         logger.error('Could not reconstruct any model!')
@@ -143,9 +153,9 @@ def main(sfm_dir, image_dir, pairs, features, matches,
     import_features(image_ids, database, features)
     import_matches(image_ids, database, pairs, matches,
                    min_match_score, skip_geometric_verification)
-    if not intrinsics_path is None:
+    if intrinsics_path is not None:
         import_intrinsics(database, intrinsics_path=intrinsics_path)
-    if not prior_pose is None:
+    if prior_pose is not None:
         import_prior_poses(database, prior_pose)
     if not skip_geometric_verification:
         geometric_verification(database, pairs, verbose)

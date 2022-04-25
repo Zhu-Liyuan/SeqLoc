@@ -109,15 +109,14 @@ def write_3dpts_corr(pairs_3d, ref_pts, q_pts, pair_dir):
 
 def localizer(images, T, scale, output):
     camera_poses = []
-    for image in images:
-        rmtx = read_write_model.qvec2rotmat(images[image].qvec)
-        coor = - rmtx.T @ images[image].tvec
-        rmtx = T[0:3, 0:3] / scale @ rmtx.T
-        qvec = read_write_model.rotmat2qvec(rmtx.T)
-        coor = T @ np.append(coor, 1.0)
-        coor /= coor[-1]
-        coor = - rmtx.T @ coor[:3]
-        camera_poses.append([images[image].name, qvec, coor])
+    for image in images.items():
+        qvec = image[1].qvec
+        rmtx = read_write_model.qvec2rotmat(qvec)
+        rmtx = T[:3,:3] / scale @ rmtx.T
+        rmtx = rmtx.T
+        qvec = read_write_model.rotmat2qvec(rmtx)
+        tvec = scale * image[1].tvec - rmtx @ T[:3,3]
+        camera_poses.append([image[1].name, qvec, tvec])
     
     if not output.exists(): output.touch()
     with open(output, 'w') as f:
@@ -138,10 +137,6 @@ def main(db_model,query_model):
     _, q_images, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
     # _, _, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
     ref_points3D = read_write_model.read_points3D_binary(db_model / "sfm_superpoint+superglue/points3D.bin")
-    # scale = scale_solver(pairs_3d, scores, ref_points3D, q_points3D)
-    # print(scale)
-    # R, t = ransac_pcr(pairs_3d, scores, q_points3D, ref_points3D, scale)
-    # print(R, t)
     corr_3d_path = query_model / "../3d_corr.txt"
     write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, corr_3d_path)
     query_pcd = query_model/"point_cloud.ply"

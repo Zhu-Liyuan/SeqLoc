@@ -67,7 +67,7 @@ def main(db_model, query_model):
         hists.append(hist)
     
     pairs_3d = []
-    NUM_2D_PTS = 4 #parameter that needs experiment
+    NUM_2D_PTS = min(4,len(q_images) * 0.5) #parameter that needs experiment
     # hfile_qr_matches = h5py.File(str(qd_matches), 'r')
     hfile_ref_kpts = h5py.File(str(db_feat_desc), 'r')
     # generate ref_image name list for fast indexing
@@ -95,7 +95,7 @@ def main(db_model, query_model):
         if corr_3ds.size!=0: 
             uni_ids, uni_counts = np.unique(corr_3ds, return_counts=True)
             post_prob = max(uni_counts)/sum(uni_counts)
-            if post_prob > 0.85 :
+            if post_prob > 0.6 :
                 ref_3d = uni_ids[uni_counts == max(uni_counts)]
                 pairs_3d.append((q_id, int(ref_3d), post_prob))
                 
