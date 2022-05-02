@@ -15,7 +15,7 @@ def Rt2T(R,t):
     T[:3,3] = t
     return T
 
-def get_teaser_solver(noise_bound = 0.02):
+def get_teaser_solver(noise_bound = 0.002):
     solver_params = teaserpp_python.RobustRegistrationSolver.Params()
     solver_params.cbar2 = 1.0
     solver_params.noise_bound = noise_bound
@@ -49,16 +49,15 @@ def parse_3d_corr(path):
     return  query_pts, ref_pts
 
 def main(corr_path, pcd_1, pcd_2, VISUALIZE = True):
-    A_pcd = o3d.io.read_point_cloud(pcd_1)
-    B_pcd = o3d.io.read_point_cloud(pcd_2)
-    A_pcd = A_pcd.voxel_down_sample(voxel_size=0.04)
-    B_pcd = B_pcd.voxel_down_sample(voxel_size=0.04)
-    A_pcd.paint_uniform_color([1.0, 0.5, 0.0])
-    if VISUALIZE:
-        o3d.visualization.draw_geometries([A_pcd,B_pcd]) # plot A and B 
     
-    A_xyz = pcd2xyz(A_pcd) # np array of size 3 by N
-    B_xyz = pcd2xyz(B_pcd) # np array of size 3 by M
+    if VISUALIZE:
+        A_pcd = o3d.io.read_point_cloud(pcd_1)
+        B_pcd = o3d.io.read_point_cloud(pcd_2)
+        # A_pcd = A_pcd.voxel_down_sample(voxel_size=0.04)
+        # B_pcd = B_pcd.voxel_down_sample(voxel_size=0.04)
+        A_pcd.paint_uniform_color([1.0, 0.5, 0.0])
+        o3d.visualization.draw_geometries([A_pcd]) # plot A and B 
+        o3d.visualization.draw_geometries([B_pcd])
 
     A_corr, B_corr = parse_3d_corr(corr_path)
     num_corrs = A_corr.shape[1]
@@ -77,7 +76,7 @@ def main(corr_path, pcd_1, pcd_2, VISUALIZE = True):
         o3d.visualization.draw_geometries([A_pcd,B_pcd,line_set])
     
     #Teaser solver for pcr
-    NOISE_BOUND = 0.02
+    NOISE_BOUND = 0.1
     teaser_solver = get_teaser_solver(NOISE_BOUND)
     teaser_solver.solve(A_corr,B_corr)
     solution = teaser_solver.getSolution()
@@ -89,19 +88,19 @@ def main(corr_path, pcd_1, pcd_2, VISUALIZE = True):
     if VISUALIZE:
         A_pcd_T_teaser = copy.deepcopy(A_pcd).transform(T_teaser)
         o3d.visualization.draw_geometries([A_pcd_T_teaser,B_pcd])
-    
+        localized_pcd = Path(pcd_1).parent/'localized.ply'
+        o3d.io.write_point_cloud(str(localized_pcd), A_pcd_T_teaser)
     # icp refinement using result from teaser
     # icp_sol = o3d.registration.registration_icp(
     #   A_pcd, B_pcd, 0.04, T_teaser,
-    #   o3d.registration.TransformationEstimationPointToPoint(),
-    #   o3d.registration.ICPConvergenceCriteria(max_iteration=100))
+    #   o3d.registration.TransformationEstimationPointToPoint())
     # T_icp = icp_sol.transformation
     
     # if VISUALIZE:
     #     A_pcd_T_icp = copy.deepcopy(A_pcd).transform(T_icp)
     #     o3d.visualization.draw_geometries([A_pcd_T_icp,B_pcd])
     
-    return T_teaser
+    return T_teaser, scale_teaser
     
     
 

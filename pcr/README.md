@@ -24,3 +24,4 @@
         ├── ImageX.JPG
         
 ```
+The discription of image pose in .bin file goes here: https://colmap.github.io/format.html#sparse-reconstruction

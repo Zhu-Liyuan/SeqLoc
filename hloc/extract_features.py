@@ -53,6 +53,18 @@ confs = {
             'resize_force': True,
         },
     },
+    'superpoint_3dv': {
+        'output': 'feats-superpoint',
+        'model': {
+            'name': 'superpoint',
+            'nms_radius': 3,
+            'max_keypoints': 4096,
+        },
+        'preprocessing': {
+            'grayscale': True,
+            'resize_max': 1600,
+        },
+    },
     'superpoint_inloc': {
         'output': 'feats-superpoint-n4096-r1600',
         'model': {

@@ -9,7 +9,7 @@ import pycolmap
 from . import logger
 from .utils.database import COLMAPDatabase
 from .utils.io import get_keypoints, get_matches
-
+from hloc.extract_features import ImageDataset,confs
 
 class OutputCapture:
     def __init__(self, verbose):
@@ -28,7 +28,7 @@ class OutputCapture:
         sys.stdout.flush()
 
 
-def create_db_from_model(reconstruction, database_path):
+def create_db_from_model(reconstruction, database_path, image_path):
     if database_path.exists():
         logger.warning('The database already exists, deleting it.')
         database_path.unlink()
@@ -36,17 +36,22 @@ def create_db_from_model(reconstruction, database_path):
     db = COLMAPDatabase.connect(database_path)
     db.create_tables()
 
+    img_loader = ImageDataset(image_path, confs['superpoint_aachen']['preprocessing'])
+    img_names = [img['name'] for img in img_loader]
+    
+    for i, image in reconstruction.images.items():
+        if image.name in img_names:
+            db.add_image(image.name, image.camera_id, image_id=i)
+            
     for i, camera in reconstruction.cameras.items():
         db.add_camera(
             camera.model_id, camera.width, camera.height, camera.params,
             camera_id=i, prior_focal_length=True)
-
-    for i, image in reconstruction.images.items():
-        db.add_image(image.name, image.camera_id, image_id=i)
-
+        
     db.commit()
     db.close()
-    return {image.name: i for i, image in reconstruction.images.items()}
+    
+    return {image.name: i for i, image in reconstruction.images.items() if image.name in img_names}
 
 
 def import_features(image_ids, database_path, features_path):
@@ -72,18 +77,19 @@ def import_matches(image_ids, database_path, pairs_path, matches_path,
     db = COLMAPDatabase.connect(database_path)
 
     matched = set()
-    for name0, name1 in tqdm(pairs):
-        id0, id1 = image_ids[name0], image_ids[name1]
-        if len({(id0, id1), (id1, id0)} & matched) > 0:
-            continue
-        matches, scores = get_matches(matches_path, name0, name1)
-        if min_match_score:
-            matches = matches[scores > min_match_score]
-        db.add_matches(id0, id1, matches)
-        matched |= {(id0, id1), (id1, id0)}
+    for name0, name1 in tqdm(pairs): 
+        if (name0 in image_ids) and (name1 in image_ids):
+            id0, id1 = image_ids[name0], image_ids[name1]
+            if len({(id0, id1), (id1, id0)} & matched) > 0:
+                continue
+            matches, scores = get_matches(matches_path, name0, name1)
+            if min_match_score:
+                matches = matches[scores > min_match_score]
+            db.add_matches(id0, id1, matches)
+            matched |= {(id0, id1), (id1, id0)}
 
-        if skip_geometric_verification:
-            db.add_two_view_geometry(id0, id1, matches)
+            if skip_geometric_verification:
+                db.add_two_view_geometry(id0, id1, matches)
 
     db.commit()
     db.close()
@@ -122,7 +128,7 @@ def main(sfm_dir, reference_model, image_dir, pairs, features, matches,
     database = sfm_dir / 'database.db'
     reference = pycolmap.Reconstruction(reference_model)
 
-    image_ids = create_db_from_model(reference, database)
+    image_ids = create_db_from_model(reference, database, image_dir)
     import_features(image_ids, database, features)
     import_matches(image_ids, database, pairs, matches,
                    min_match_score, skip_geometric_verification)
