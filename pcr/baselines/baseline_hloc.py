@@ -6,7 +6,7 @@ from pathlib import Path
 from hloc import extract_features, match_features, pairs_from_retrieval
 from hloc import localize_sfm
 
-from pcr.utils import evaluate_results
+from pcr.utils import evaluate_results,save_eva_results
 import argparse
 
 def main(dataset_path,
@@ -29,8 +29,9 @@ def main(dataset_path,
     query_dir = query_images_path
     query_output = query_dir / 'outputs'
     query_images = query_dir / 'images' # Query images stored
-    loc_pairs = query_output / 'pairs-query-netvlad20.txt'  # top 20 retrieved by NetVLAD (global descriptors of query images)
+    loc_pairs = query_output / 'pairs-top20-query-netvlad20.txt'  # top 20 retrieved by NetVLAD (global descriptors of query images)
     localization_results = query_dir / 'hloc_localization_results.txt'
+    evaluation_result_path = query_dir / 'hloc_localization_evaluation.csv'
 
     # Global map
     global_dir = global_map_path
@@ -72,10 +73,13 @@ def main(dataset_path,
     # Evaluate
     if evaluation:
         eval_results = evaluate_results(reference_sfm / 'images.bin', localization_results)
+        save_eva_results(eval_results, fpath=evaluation_result_path)
 
 
 if __name__ == "__main__":
     dataset = Path('/cluster/project/infk/courses/252-0579-00L/group16/Aachen-Day-Night')
-    query_dir = Path('/cluster/project/infk/courses/252-0579-00L/group16/PCR/AachenImageSequenceSamples') / '1'
+    query_dir = Path('/cluster/project/infk/courses/252-0579-00L/group16/PCR/query_sequencies')
     global_dir = Path('/cluster/project/infk/courses/252-0579-00L/group16/output/superpoint+superglue_aachen')
-    main(dataset, query_dir, global_dir)
+
+    for i in range(1,11):
+        main(dataset, query_dir/str(i), global_dir, evaluation=True)

@@ -135,18 +135,19 @@ def main(db_model,query_model,local_visual):
     if isinstance(query_model, str):
         query_model = Path(query_model)
 
-    pairs_3d_path = query_model/'../3d_pairs.txt'
+    pairs_3d_path = query_model/'3d_pairs.txt'
+    sfm_model = query_model/'outputs'/"sfm_superpoint+superglue/"
 
     pairs_3d, scores = parse_3d_pairs(pairs_3d_path)
-    _, q_images, q_points3D = read_write_model.read_model(path=query_model / "sfm_superpoint+superglue/", ext='.bin')
+    _, q_images, q_points3D = read_write_model.read_model(path=sfm_model, ext='.bin')
     # _, _, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
     ref_points3D = read_write_model.read_points3D_binary(db_model / "sfm_superpoint+superglue/points3D.bin")
-    corr_3d_path = query_model / "../3d_corr.txt"
+    corr_3d_path = query_model / "3d_corr.txt"
     write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, corr_3d_path)
-    query_pcd = query_model/"point_cloud.ply"
-    ref_pcd = db_model/"point_cloud.ply"
+    query_pcd = query_model/'outputs'/"point_cloud.ply"
+    ref_pcd = db_model/'outputs'/"point_cloud.ply"
     T, t_scale = teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd), VISUALIZE=local_visual)
-    localizer(q_images, T, t_scale,  query_model/'../localization_results.txt')
+    localizer(q_images, T, t_scale,  query_model/'localization_results.txt')
     
 
 if __name__ == '__main__':

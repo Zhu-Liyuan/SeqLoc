@@ -1,7 +1,6 @@
 from pathlib import Path
 from pcr import sfm_pipeline, pairs_3d_from_2d, poses_from_pcr
-from pcr.utils import load_config, evaluate_results
-import numpy as np
+from pcr.utils import load_config, evaluate_results, save_eva_results
 
 import argparse
 
@@ -20,25 +19,15 @@ def main(config_path:str):
     # Seqloc pipeline
     sfm_pipeline.main(**config["query"])
     pairs_3d_from_2d.main(ref_path, query_path)
-    poses_from_pcr.main(ref_path, query_path)
+    poses_from_pcr.main(ref_path, query_path, local_visual=False)
     # Evaluation
-    evaluate_results(ref_path/'outputs/sfm_superpoint+superglue/images.bin', query_path/'localization_results.txt')
-
-    # results = np.empty((0, 2))
-    # for i in range(1, 11):
-    #     query_str = Path(
-    #         '/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query/' + str(i)) / 'localization_results.txt'
-    #     # results.append(evaluate_results(ref_path/'outputs/sfm_superpoint+superglue/images.bin', query_str))
-    #     results = np.append(results,
-    #                         evaluate_results(ref_path / 'outputs/sfm_superpoint+superglue/images.bin', query_str))
-    #
-    # results = np.array(results).reshape(-1, 2)
-    # pass
+    eval_results = evaluate_results(ref_path/'sfm_superpoint+superglue/images.bin', query_path/'localization_results.txt')
+    save_eva_results(eval_results, query_path / "seqloc_evaluation.csv")
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Seqloc pipeline')
-    parser.add_argument('--config_path', type=str, required=True, help="Path to the config file")
+    parser.add_argument('--config_path', type=str, default="pcr/config/seqloc.yaml", help="Path to the config file")
 
     args = parser.parse_args()
 

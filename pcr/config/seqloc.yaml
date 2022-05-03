@@ -1,5 +1,5 @@
 query:
-  proj_dir: /cluster/project/infk/courses/252-0579-00L/group16/PCR/AachenImageSequenceSamples/1
+  proj_dir: /cluster/project/infk/courses/252-0579-00L/group16/PCR/query_sequencies/1
   retrieval_conf: "netvlad"
   feature_conf: "superpoint_aachen"
   matcher_conf: "superglue"

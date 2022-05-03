@@ -130,9 +130,23 @@ def evaluate_results(ref:Path, q_results:Path):
             diff_angle = (min(ang_diff,np.pi - ang_diff)*180/np.pi)
             diff_distance = np.linalg.norm(np.asarray(data[4:],dtype=np.float64) - ref_img.tvec)
             print(f'{name}:({diff_angle},{diff_distance})')
-            results.append([diff_angle,diff_distance])
-    results = np.asarray(results,dtype=np.float32).reshape(-1,2)
+            results.append([name, diff_angle, diff_distance])
+    # results = np.asarray(results,dtype=np.float32).reshape(-1,2)
     return results
+
+
+def save_eva_results(results_list: list, fpath: str):
+    """
+    Save evaluation results
+    Args:
+        results_list: [[img_name, diff_anlge_in_degree, diff_distance_in_meter],]
+        fpath: save path
+    """
+    with open(fpath, "w") as file:
+        file.writelines("image,angle,distance\n")
+        for r in results_list:
+            file.writelines(f"{r[0]},{r[1]},{r[2]}\n")
+
     
 if __name__ == "__main__":
     input_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/pcr/db/outputs/sfm_superpoint+superglue")

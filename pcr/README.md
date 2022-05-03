@@ -4,9 +4,17 @@
 
 You can run the _seqloc_ pipeline **step by step** by using the following commands:
 
-1. SFM to reconstruct local point cloud for image sequences: `python -m pcr.sfm_pipeline --proj_dir="/cluster/project/infk/courses/252-0579-00L/group16/PCR/AachenImageSequenceSamples/1"`
-2. Extract 2d-to-3d correspondence: `python -m pcr.pairs_3d_from_2d --db_model="/cluster/project/infk/courses/252-0579-00L/group16/output/superpoint+superglue_aachen" --query_model="/cluster/project/infk/courses/252-0579-00L/group16/PCR/AachenImageSequenceSamples/1"`
-3. Register local point cloud to the global model: `python -m pcr.poses_from_pcr --db_model="/cluster/project/infk/courses/252-0579-00L/group16/output/superpoint+superglue_aachen" --query_model="/cluster/project/infk/courses/252-0579-00L/group16/PCR/AachenImageSequenceSamples/1"`
+1. SFM to reconstruct local point cloud for image sequences: 
+
+`python -m pcr.sfm_pipeline --proj_dir="/cluster/project/infk/courses/252-0579-00L/group16/PCR/AachenImageSequenceSamples/1"`
+
+2. Extract 2d-to-3d correspondence: 
+
+`python -m pcr.pairs_3d_from_2d --db_model="/cluster/project/infk/courses/252-0579-00L/group16/output/superpoint+superglue_aachen" --query_model="/cluster/project/infk/courses/252-0579-00L/group16/PCR/AachenImageSequenceSamples/1"`
+
+3. Register local point cloud to the global model: 
+
+`python -m pcr.poses_from_pcr --db_model="/cluster/project/infk/courses/252-0579-00L/group16/output/superpoint+superglue_aachen" --query_model="/cluster/project/infk/courses/252-0579-00L/group16/PCR/AachenImageSequenceSamples/1"`
 
 Or you can run the _seqloc_ pipeline **as a whole** by calling:
 
