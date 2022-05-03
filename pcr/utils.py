@@ -123,6 +123,7 @@ def evaluate_results(ref:Path, q_results:Path):
             if len(line) == 0 or line[0] == '#':
                 continue
             name, *data = line.split()
+            name = name.split("/")[-1]
             ref_img = get_image_from_name(ref_images, name)[1]
             qvec_1 = np.asarray(data[:4],dtype=np.float64)
             qvec_2 = ref_img.qvec
