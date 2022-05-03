@@ -159,6 +159,9 @@ def main(reference_sfm: Union[Path, pycolmap.Reconstruction],
     }
     logger.info('Starting localization...')
     for qname, qcam in tqdm(queries):
+        # if qname == "db/48.jpg":
+        #     print(f"retrieval_dict {retrieval_dict}")
+        #     print(f"qname {qname}; In retrieval_dict {retrieval_dict[qname]}")
         if qname not in retrieval_dict:
             logger.warning(
                 f'No images retrieved for query image {qname}. Skipping...')
