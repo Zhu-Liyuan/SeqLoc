@@ -6,7 +6,12 @@ import numpy as np
 import argparse
 
 
-def main(config_path):
+def main(config_path:str):
+    """
+    sequential localization pipeline
+    Args:
+        config_path: Path to config file
+    """
     # Load config file
     config = load_config(config_path)
     # Define paths
