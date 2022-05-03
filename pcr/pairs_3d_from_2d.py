@@ -4,17 +4,22 @@ from hloc.utils import read_write_model, database, viz, io, parsers
 from hloc import pairs_from_retrieval, match_features
 import h5py
 from tqdm import tqdm
+import argparse
+
 
 def image_from_name(images, name):
     for item in images:
         if images[item].name == name:
             return images[item]
-    
+
+
 def main(db_model, query_model):
     ##  Path define
-    # data_path = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp")
-    # db_model = data_path / "ref/outputs"
-    # query_model = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query/3/outputs")
+    if isinstance(db_model, str):
+        db_model = Path(db_model)
+    if isinstance(query_model, str):
+        query_model = Path(query_model)
+    query_model = query_model / "outputs"
 
     db_global_desc = db_model / "global-feats-netvlad.h5"
     query_global_desc = query_model / "global-feats-netvlad.h5"
@@ -55,7 +60,7 @@ def main(db_model, query_model):
         recon_mask = (q_images[i].point3D_ids!=-1) #mask of 2d points that are successfully reconstructed
         recon_ids = np.arange(len(xys))[recon_mask] # indices same to above
         recon_2d_pts = xys[recon_ids]
-        
+
         hist = np.zeros(xys.shape[0])
         for q,r in pairs:
             if q == name:
@@ -89,7 +94,8 @@ def main(db_model, query_model):
                         # ref_image = ref_images[ref_names.index(r)] ## there might be bugs of images indexing
                         ref_image = image_from_name(ref_images, r)
                         # corr_3ds.append(ref_image.point3D_ids[ref_id])
-                        if ref_id == -1: continue
+                        if ref_id == -1 or len(ref_id)<1 or ref_image == None:
+                            continue
                         corr_3ds = np.append(corr_3ds, np.array(ref_image.point3D_ids[ref_id]))
                            
         if corr_3ds.size!=0: 
@@ -106,5 +112,11 @@ def main(db_model, query_model):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Pairs from 3D to 2D')
+    parser.add_argument('--db_model', type=str, required=True, help="Path to the database model")
+    parser.add_argument('--query_model', type=str, required=True, help="Path to the query model")
+
+    args = parser.parse_args()
+
+    main(**args.__dict__)
     

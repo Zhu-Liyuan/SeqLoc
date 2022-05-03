@@ -1,0 +1,8 @@
+query:
+  proj_dir: /cluster/project/infk/courses/252-0579-00L/group16/PCR/AachenImageSequenceSamples/1
+  retrieval_conf: "netvlad"
+  feature_conf: "superpoint_aachen"
+  matcher_conf: "superglue"
+  local_visual: False
+database:
+  proj_dir: /cluster/project/infk/courses/252-0579-00L/group16/output/superpoint+superglue_aachen

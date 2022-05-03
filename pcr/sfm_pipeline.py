@@ -6,7 +6,7 @@ import argparse
 def main(proj_dir,
     retrieval_conf, 
     feature_conf,
-    matcher_conf):
+    matcher_conf, local_visual):
     """
     SFM pipeline
     Input: Downloaded images from Aachen Day & Night in `img_dir`
@@ -28,8 +28,10 @@ def main(proj_dir,
     match_path = match_features.main(matcher_conf, sfm_pairs, feature_conf['output'], outputs)
     # 3D Reconstruction
     model = reconstruction.main(sfm_dir, img_dir, sfm_pairs, feature_path, match_path)
-    
-    # convert_bin_to_ply(sfm_dir, sfm_dir/'../point_cloud.ply')
+
+    if local_visual:
+        from pcr.utils import convert_bin_to_ply
+        convert_bin_to_ply(sfm_dir, sfm_dir/'../point_cloud.ply')
     
 
 if __name__ == "__main__":
@@ -37,10 +39,10 @@ if __name__ == "__main__":
     parser.add_argument('--proj_dir', type=str, required=True)
     parser.add_argument('--retrieval_conf', type=str, default="netvlad",choices=list(extract_features.confs.keys()))
     parser.add_argument('--feature_conf', type=str, default="superpoint_aachen", choices=list(extract_features.confs.keys()))
-    parser.add_argument('--matcher_conf', type=str, default="superglue", choices=list(match_features.confs.keys()))             
+    parser.add_argument('--matcher_conf', type=str, default="superglue", choices=list(match_features.confs.keys()))
+    parser.add_argument('--local_visual', type=bool, default=False, help="Use open3d to visualize locally")
 
-    
-    
+
     args = parser.parse_args()
 
     main(**args.__dict__)

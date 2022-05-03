@@ -4,7 +4,9 @@ from matplotlib import scale
 import numpy as np
 from hloc.utils import read_write_model, parsers
 import random
-import teaser_pcr
+from pcr import teaser_pcr
+
+import argparse
 
 
 
@@ -126,11 +128,13 @@ def localizer(images, T, scale, output):
             f.write(f'{pose[0]} {qvec} {coor}\n')
     return camera_poses
     
-def main(db_model,query_model):
-    # data_path = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp")
-    
-    # db_model = data_path / "ref/outputs"
-    # query_model = Path("/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query/3/outputs/")
+def main(db_model,query_model,local_visual):
+    ##  Path define
+    if isinstance(db_model, str):
+        db_model = Path(db_model)
+    if isinstance(query_model, str):
+        query_model = Path(query_model)
+
     pairs_3d_path = query_model/'../3d_pairs.txt'
 
     pairs_3d, scores = parse_3d_pairs(pairs_3d_path)
@@ -141,12 +145,19 @@ def main(db_model,query_model):
     write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, corr_3d_path)
     query_pcd = query_model/"point_cloud.ply"
     ref_pcd = db_model/"point_cloud.ply"
-    T, t_scale = teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd), VISUALIZE=True)
+    T, t_scale = teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd), VISUALIZE=local_visual)
     localizer(q_images, T, t_scale,  query_model/'../localization_results.txt')
     
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Calculate camera poses by point cloud registration')
+    parser.add_argument('--db_model', type=str, required=True, help="Path to the database model")
+    parser.add_argument('--query_model', type=str, required=True, help="Path to the query model")
+    parser.add_argument('--local_visual', type=bool, default=False, help="Use open3d to visualize results")
+
+    args = parser.parse_args()
+
+    main(**args.__dict__)
     
     
     

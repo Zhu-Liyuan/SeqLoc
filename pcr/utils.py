@@ -1,11 +1,15 @@
 from pathlib import Path
 import numpy as np
 from hloc.utils import read_write_model, database, io
-import open3d as o3d
 import yaml
 from yaml import CLoader as Loader, CDumper as Dumper
 
+
 def convert_bin_to_ply(input_path, output_path):
+    ''' Convert bin to ply
+    Args:
+    '''
+    import open3d as o3d
     points = read_write_model.read_points3D_binary(input_path/'points3D.bin')
     xyz = []
     rgb = []
@@ -21,6 +25,7 @@ def convert_bin_to_ply(input_path, output_path):
     pcd.colors = o3d.utility.Vector3dVector(rgb)
     
     o3d.io.write_point_cloud(str(output_path), pcd)
+
 
 def load_config(path):
     ''' Loads config file.
@@ -39,6 +44,7 @@ def load_config(path):
     # update_recursive(cfg, cfg_special)
 
     return cfg_special
+
 
 def triangulate_sub_model(reference_path, output_path):
     #### Generate new database for the sub model
@@ -85,6 +91,7 @@ def triangulate_sub_model(reference_path, output_path):
         Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/ref/images/'),
         sub_reference)
 
+
 def get_image_from_name(ref_images, name):
     # ref_images = read_write_model.read_images_binary(ref)
     for ref_image in ref_images.items():
@@ -92,12 +99,19 @@ def get_image_from_name(ref_images, name):
         if name == ref_name:
             return ref_image
 
+
 def angle_between_two_qvec(qvec1, qvec2):
     qvec2[1:] *= -1
     z = np.dot(qvec1, qvec2)
     return np.arccos(z)
-    
+
+
 def evaluate_results(ref:Path, q_results:Path):
+    """
+    Args:
+        ref: Reference path to *.bin
+        q_results: Results path to localization results
+    """
     assert ref.exists(),ref
     assert q_results.exists(),q_results
     ref_images = read_write_model.read_images_binary(ref)

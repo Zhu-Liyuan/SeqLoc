@@ -1,7 +1,6 @@
 # code adapted from TEASER_PLUSPLUS official implementation:
 # https://github.com/MIT-SPARK/TEASER-plusplus
 from pathlib import Path
-import open3d as o3d
 import teaserpp_python
 import numpy as np 
 import copy
@@ -51,6 +50,7 @@ def parse_3d_corr(path):
 def main(corr_path, pcd_1, pcd_2, VISUALIZE = True):
     
     if VISUALIZE:
+        import open3d as o3d
         A_pcd = o3d.io.read_point_cloud(pcd_1)
         B_pcd = o3d.io.read_point_cloud(pcd_2)
         # A_pcd = A_pcd.voxel_down_sample(voxel_size=0.04)
