@@ -102,9 +102,13 @@ def get_image_from_name(ref_images, name):
 
 
 def angle_between_two_qvec(qvec1, qvec2):
-    qvec2[1:] *= -1
-    z = np.dot(qvec1, qvec2)
-    return np.arccos(z)
+    # qvec2[1:] *= -1
+    
+    rmtx1 = read_write_model.qvec2rotmat(qvec1)
+    rmtx2 = read_write_model.qvec2rotmat(qvec2)
+    qvec = read_write_model.rotmat2qvec(rmtx1 @ rmtx2.T)
+    ang = np.arccos(qvec[0])/2
+    return ang
 
 
 def evaluate_results(ref: Path, q_results: Path):
@@ -128,9 +132,17 @@ def evaluate_results(ref: Path, q_results: Path):
             ref_img = get_image_from_name(ref_images, name)[1]
             qvec_1 = np.asarray(data[:4], dtype=np.float64)
             qvec_2 = ref_img.qvec
+<<<<<<< HEAD
             ang_diff = angle_between_two_qvec(qvec_1, qvec_2)
             diff_angle = (min(ang_diff, np.pi - ang_diff) * 180 / np.pi)
             diff_distance = np.linalg.norm(np.asarray(data[4:], dtype=np.float64) - ref_img.tvec)
+=======
+            diff_angle = angle_between_two_qvec(qvec_1, qvec_2)*180/np.pi
+            ref_coor = - read_write_model.qvec2rotmat(qvec_2).T @ ref_img.tvec
+            query_coor = -read_write_model.qvec2rotmat(qvec_1).T @ np.asarray(data[4:],dtype=np.float64)
+            diff_distance = np.linalg.norm(ref_coor - query_coor)
+            # diff_distance = np.linalg.norm(np.asarray(data[4:],dtype=np.float64) - ref_img.tvec)
+>>>>>>> 33a487ad291d54015008592824afd6f771dc9d5f
             print(f'{name}:({diff_angle},{diff_distance})')
             results.append([name, diff_angle, diff_distance])
     # results = np.asarray(results,dtype=np.float32).reshape(-1,2)
