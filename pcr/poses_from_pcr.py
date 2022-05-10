@@ -112,12 +112,15 @@ def write_3dpts_corr(pairs_3d, ref_pts, q_pts, pair_dir):
 def localizer(images, T, scale, output):
     camera_poses = []
     for image in images.items():
-        qvec = image[1].qvec
-        rmtx = read_write_model.qvec2rotmat(qvec)
-        rmtx = T[:3,:3] / scale @ rmtx.T
-        rmtx = rmtx.T
-        qvec = read_write_model.rotmat2qvec(rmtx)
-        tvec = scale * image[1].tvec - rmtx @ T[:3,3]
+        qvec = image[1].qvec # camera_qvec in local point cloud
+        camera_rmtx = read_write_model.qvec2rotmat(qvec).T
+        camera_coor = - (camera_rmtx @ image[1].tvec).reshape(3,1) * scale
+        local_projection_center = np.append(camera_rmtx, camera_coor, axis=1)
+        local_projection_mtx = np.append(local_projection_center, np.array([0,0,0,1]).reshape(1,4), axis = 0)
+        world_projection_mtx = T @ local_projection_mtx 
+        world_rotmtx = world_projection_mtx[:3,:3]
+        qvec = read_write_model.rotmat2qvec(world_rotmtx.T)
+        tvec = - world_rotmtx.T @ world_projection_mtx[0:3,3]
         camera_poses.append([image[1].name, qvec, tvec])
     
     if not output.exists(): output.touch()
