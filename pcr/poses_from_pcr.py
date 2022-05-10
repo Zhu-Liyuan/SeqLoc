@@ -136,7 +136,7 @@ def localizer(images, T, scale, output):
     return camera_poses
 
 
-def main(db_model, query_model, local_visual, sfm_path):
+def main(db_model, query_model, local_visual):
     ##  Path define
     if isinstance(db_model, str):
         db_model = Path(db_model)
@@ -144,17 +144,14 @@ def main(db_model, query_model, local_visual, sfm_path):
         query_model = Path(query_model)
 
     pairs_3d_path = query_model / '3d_pairs.txt'
-    # sfm_model = query_model/'outputs'/"sfm_superpoint+superglue/"
-    # TODO
-    sfm_model = Path(sfm_path) / 'outputs' / "sfm_superpoint+superglue/"
+    sfm_model = query_model / 'outputs' / "sfm_superpoint+superglue/"
 
     # READ 3D PAIRS FILE
     pairs_3d, scores = parse_3d_pairs(pairs_3d_path)
     # READ SFM MODEL OF IMAGE SEQUENCE
     _, q_images, q_points3D = read_write_model.read_model(path=sfm_model, ext='.bin')
-    # _, _, ref_points3D = read_write_model.read_model(path=db_model / "sfm_superpoint+superglue/", ext='.bin')
     # READ SFM MODEL OF WHOLE DATASET
-    ref_points3D = read_write_model.read_points3D_binary(db_model / "sfm_superpoint+superglue/points3D.bin")
+    ref_points3D = read_write_model.read_points3D_binary(db_model / "sfm_superpoint+superglue" / "points3D.bin")
     # GET COORDINATES OF CORRESONDING POINTS IN QUERY AND REF
     corr_3d_path = query_model / "3d_corr.txt"
     write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, corr_3d_path)
@@ -170,15 +167,10 @@ def main(db_model, query_model, local_visual, sfm_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Calculate camera poses by point cloud registration')
     parser.add_argument('--local_visual', type=bool, default=False, help="Use open3d to visualize results")
-    # TODO
-    # parser.add_argument('--db_model', type=str, required=True, help="Path to the database model")
-    # parser.add_argument('--query_model', type=str, required=True, help="Path to the query model")
     parser.add_argument('--db_model', type=str, default="/cluster/project/infk/courses/252-0579-00L/group16/output"
                                                         "/superpoint+superglue_aachen")
     parser.add_argument('--query_model', type=str, default="/cluster/project/infk/courses/252-0579-00L/group16/hs"
                                                            "/test/pairs_3d_from_2d/")
-    parser.add_argument('--sfm_path', type=str,
-                        default='/cluster/project/infk/courses/252-0579-00L/group16/hs/test/sfm_pipeline/')
 
     args = parser.parse_args()
 
