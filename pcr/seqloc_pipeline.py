@@ -16,6 +16,8 @@ def main(config_path:str):
     # Define paths
     ref_path = Path(config["database"]["proj_dir"])
     query_path = Path(config["query"]["proj_dir"])
+    # TODO output_path
+    # output_path = Path(config["query"]["output_dir"])
     # Seqloc pipeline
     sfm_pipeline.main(**config["query"])
     pairs_3d_from_2d.main(ref_path, query_path)
