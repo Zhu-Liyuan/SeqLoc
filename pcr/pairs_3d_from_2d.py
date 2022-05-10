@@ -35,7 +35,7 @@ def main(db_model, query_model):
     assert db_feat_desc.exists()*db_global_desc.exists()*query_feat_desc.exists()*query_global_desc.exists(), "Some feature files are not found!"
 
     ##  Generate image matches, 5 match per query image
-    pairs_from_retrieval.main(query_global_desc, output / "qd_pairs.txt", num_matched = 10, db_descriptors=db_global_desc)
+    pairs_from_retrieval.main(query_global_desc, output / "qd_pairs.txt", num_matched = 20, db_descriptors=db_global_desc)
 
     ##  Point Feature matching between q and db
     conf = match_features.confs['superglue']
