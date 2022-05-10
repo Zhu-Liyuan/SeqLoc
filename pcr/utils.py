@@ -129,6 +129,9 @@ def evaluate_results(ref:Path, q_results:Path):
             qvec_2 = ref_img.qvec
             ang_diff = angle_between_two_qvec(qvec_1, qvec_2)
             diff_angle = (min(ang_diff,np.pi - ang_diff)*180/np.pi)
+            ref_coor = - read_write_model.qvec2rotmat(qvec_2).T @ np.asarray(ref_img.tvec)
+            query_coor = - read_write_model.qvec2rotmat(np.append(qvec_1[0],-qvec_1[1:])).T @ np.asarray(data[4:],dtype=np.float64)
+            print(np.linalg.norm(ref_coor - query_coor))
             diff_distance = np.linalg.norm(np.asarray(data[4:],dtype=np.float64) - ref_img.tvec)
             print(f'{name}:({diff_angle},{diff_distance})')
             results.append([name, diff_angle, diff_distance])
@@ -148,8 +151,14 @@ def save_eva_results(results_list: list, fpath: str):
         for r in results_list:
             file.writelines(f"{r[0]},{r[1]},{r[2]}\n")
 
+def plot_camera_poses():
+    """
+    Plot camera pose estimate in ply file
+    Args:
     
+    """
 if __name__ == "__main__":
+    camera_poses = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/pcr/db/outputs/sfm_superpoint+superglue")
     input_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/pcr/db/outputs/sfm_superpoint+superglue")
     output_path = Path("/home/marvin/ETH_Study/3DV/3DV/datasets/pcr/db/outputs/point_cloud.ply")
     # convert_bin_to_ply(input_path, output_path)
@@ -159,3 +168,4 @@ if __name__ == "__main__":
     ref = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp/ref/outputs/sfm_sift/images.bin')
     result = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query/1/localization_results.txt')
     evaluate_results(ref,result)
+    

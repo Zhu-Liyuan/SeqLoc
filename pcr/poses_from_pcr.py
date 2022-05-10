@@ -111,13 +111,14 @@ def write_3dpts_corr(pairs_3d, ref_pts, q_pts, pair_dir):
 
 def localizer(images, T, scale, output):
     camera_poses = []
+    # scale = np.linalg.norm(T[:3,:3])
     for image in images.items():
         qvec = image[1].qvec
         rmtx = read_write_model.qvec2rotmat(qvec)
-        rmtx = T[:3,:3] / scale @ rmtx.T
+        rmtx = T[:3,:3] @ rmtx.T
         rmtx = rmtx.T
         qvec = read_write_model.rotmat2qvec(rmtx)
-        tvec = scale * image[1].tvec - rmtx @ T[:3,3]
+        tvec = image[1].tvec * scale - rmtx @ T[:3,3]#######
         camera_poses.append([image[1].name, qvec, tvec])
     
     if not output.exists(): output.touch()
@@ -128,7 +129,7 @@ def localizer(images, T, scale, output):
             f.write(f'{pose[0]} {qvec} {coor}\n')
     return camera_poses
     
-def main(db_model,query_model,local_visual):
+def main(db_model,query_model,local_visual:bool):
     ##  Path define
     if isinstance(db_model, str):
         db_model = Path(db_model)
@@ -145,7 +146,7 @@ def main(db_model,query_model,local_visual):
     corr_3d_path = query_model / "3d_corr.txt"
     write_3dpts_corr(pairs_3d, ref_points3D, q_points3D, corr_3d_path)
     query_pcd = query_model/'outputs'/"point_cloud.ply"
-    ref_pcd = db_model/'outputs'/"point_cloud.ply"
+    ref_pcd = db_model/"point_cloud.ply"
     T, t_scale = teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd), VISUALIZE=local_visual)
     localizer(q_images, T, t_scale,  query_model/'localization_results.txt')
     

@@ -22,7 +22,7 @@ def get_teaser_solver(noise_bound = 0.002):
     solver_params.inlier_selection_mode = \
         teaserpp_python.RobustRegistrationSolver.INLIER_SELECTION_MODE.PMC_EXACT
     solver_params.rotation_tim_graph = \
-        teaserpp_python.RobustRegistrationSolver.INLIER_GRAPH_FORMULATION.CHAIN
+        teaserpp_python.RobustRegistrationSolver.INLIER_GRAPH_FORMULATION.COMPLETE
     solver_params.rotation_estimation_algorithm = \
         teaserpp_python.RobustRegistrationSolver.ROTATION_ESTIMATION_ALGORITHM.GNC_TLS
     solver_params.rotation_gnc_factor = 1.4
@@ -100,7 +100,7 @@ def main(corr_path, pcd_1, pcd_2, VISUALIZE = True):
     #     A_pcd_T_icp = copy.deepcopy(A_pcd).transform(T_icp)
     #     o3d.visualization.draw_geometries([A_pcd_T_icp,B_pcd])
     
-    return T_teaser, scale_teaser
+    return Rt2T(R_teaser,t_teaser), scale_teaser
     
     
 
