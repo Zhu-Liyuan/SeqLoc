@@ -116,14 +116,18 @@ def write_3dpts_corr(pairs_3d, ref_pts, q_pts, pair_dir):
 def localizer(images, T, scale, output):
     camera_poses = []
     for image in images.items():
-        # Quaternion of image
+        # q_old
         qvec = image[1].qvec
+        # R_old
         rmtx = read_write_model.qvec2rotmat(qvec)
         # Rotation from image -> local camera frame -> global pointcloud frame
+        # R_new
         rmtx = T[:3, :3] / scale @ rmtx.T
         rmtx = rmtx.T
+        # q_new
         qvec = read_write_model.rotmat2qvec(rmtx)
         # Translation from image -> local camera frame -> global pointcloud frame
+        # t_new
         tvec = scale * image[1].tvec - rmtx @ T[:3, 3]
         camera_poses.append([image[1].name, qvec, tvec])
 
@@ -164,6 +168,7 @@ def main(db_model, query_model, local_visual, sfm_path):
     # T: 4*4 transformation matrix
     T, t_scale = teaser_pcr.main(corr_3d_path, str(query_pcd), str(ref_pcd), VISUALIZE=local_visual)
     # LOCALIZE
+    # CAMERA POSE UNDER GLOBAL POINT FRAME
     localizer(q_images, T, t_scale, query_model / 'localization_results.txt')
 
 
