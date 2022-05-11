@@ -85,7 +85,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--slices', type=str, default='*',
                         help='a single number, an interval (e.g. 2-6), '
-                        'or a Python-style list or int (e.g. [2, 3, 4]')
+                             'or a Python-style list or int (e.g. [2, 3, 4]')
     parser.add_argument('--dataset', type=Path,
                         default='datasets/cmu_extended',
                         help='Path to the dataset, default: %(default)s')
@@ -98,11 +98,11 @@ if __name__ == '__main__':
                         help='Number of image pairs for loc, default: %(default)s')
     args = parser.parse_args()
 
-    if args.slice == '*':
+    if args.slices == '*':
         slices = TEST_SLICES
-    if '-' in args.slices:
+    elif '-' in args.slices:
         min_, max_ = args.slices.split('-')
-        slices = list(range(int(min_), int(max_)+1))
+        slices = list(range(int(min_), int(max_) + 1))
     else:
         slices = eval(args.slices)
         if isinstance(slices, int):
