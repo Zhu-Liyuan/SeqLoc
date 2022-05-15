@@ -48,7 +48,7 @@ def parse_3d_corr(path):
     return  query_pts, ref_pts
 
 def main(corr_path, pcd_1, pcd_2, VISUALIZE = True):
-    
+    print('Start solving point cloud registration')
     if VISUALIZE:
         import open3d as o3d
         A_pcd = o3d.io.read_point_cloud(pcd_1)

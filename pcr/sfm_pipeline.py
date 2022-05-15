@@ -16,18 +16,19 @@ def main(proj_dir,
     outputs = Path(proj_dir) / 'outputs/'
     sfm_pairs = outputs / 'pairs-netvlad.txt'
     sfm_dir = outputs / 'sfm_superpoint+superglue'
-
+    intrinsic_path = Path('/home/marvin/ETH_Study/3DV/3DV/datasets/aachen/3D-models/database_intrinsics.txt')
     retrieval_conf = extract_features.confs[retrieval_conf]
     feature_conf = extract_features.confs[feature_conf]
     matcher_conf = match_features.confs[matcher_conf]
     # Find image pairs via image retrieval
+    img_loader = extract_features.ImageDataset(img_dir, feature_conf['preprocessing'])
     retrieval_path = extract_features.main(retrieval_conf, img_dir, outputs)
-    pairs_from_retrieval.main(retrieval_path, sfm_pairs, num_matched=5)
+    pairs_from_retrieval.main(retrieval_path, sfm_pairs, num_matched=len(img_loader) - 1)
     # Extract features for image pairs; and match local features
     feature_path = extract_features.main(feature_conf, img_dir, outputs)
     match_path = match_features.main(matcher_conf, sfm_pairs, feature_conf['output'], outputs)
     # 3D Reconstruction
-    model = reconstruction.main(sfm_dir, img_dir, sfm_pairs, feature_path, match_path)
+    model = reconstruction.main(sfm_dir, img_dir, sfm_pairs, feature_path, match_path, intrinsics_path=intrinsic_path)
 
     if local_visual:
         from pcr.utils import convert_bin_to_ply
