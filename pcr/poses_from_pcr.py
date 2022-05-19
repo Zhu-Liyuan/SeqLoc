@@ -1,4 +1,5 @@
 from pathlib import Path
+from nbformat import read
 import numpy as np
 from hloc.utils import read_write_model, parsers, io
 import random
@@ -142,7 +143,7 @@ def pose_refiner(
         reference_sfm, 
         output
     ):
-    """refine the pose from pcr
+    """refine the pose of query images one by one
     by calling pycolmap.pose_refinement()
     codebase: hloc/localize_sfm.py
     Input args:
@@ -181,9 +182,8 @@ def pose_refiner(
     refine_options.max_num_iterations = 500
     refine_options.refine_extra_params = True
     refine_options.refine_focal_length = True
-    # print('Refinement options:\n',refine_options)
+
     for pcr_img in tqdm(pcr_images):
-        # pcr_img = 'db/4326.jpg'
         kpq = io.get_keypoints(features_path, pcr_img)
         kpq += 0.5  # COLMAP coordinates
         kp_idx_to_3D = defaultdict(list)
@@ -261,7 +261,132 @@ def pose_refiner(
     
     return refined_poses
     
+def rig_pose_refiner(
+        pcr_results,
+        features_path,
+        matches_path,
+        retrievel_path,
+        query_sfm,
+        reference_sfm, 
+        output
+    ):
+    """refine the poses in the sequence jointly
+    by calling pycolmap.rig_absolute_pose_estimation()
+    codebase: hloc/localize_sfm.py
+    Input args:
+        pcr_results,
+        q_cameras, 
+        q_images,
+        features_path,
+        matches_path
+    Output args:
+        Camera_poses:[qname, qvec, tvec] of each camera
+
+    """
+    pcr_images = {}
+    reference_sfm = pycolmap.Reconstruction(reference_sfm)
+    query_sfm = pycolmap.Reconstruction(query_sfm)
+    q_images = query_sfm.images
+    q_cameras = query_sfm.cameras
+    db_name_to_id = {img.name: i for i, img in reference_sfm.images.items()}
+    with open(pcr_results, 'r') as f:
+        for p in f.read().rstrip('\n').split('\n'):
+            image = p.split()
+            qname = image[0]
+            qcamera = None
+            qvec = np.asarray(image[1:5], dtype=np.float64)
+            tvec = np.asarray(image[5:], dtype=np.float64)
+            for q_image in q_images.items():
+                if qname == q_image[1].name:
+                    qcamera = q_cameras[q_image[1].camera_id]
+                    pcr_images[qname] = [q_image[1].image_id, qcamera, tvec, qvec]
+                    break
+            
+    # refine the pose of given image
+    print('Starting rig pose refinement')
+    refine_options = pycolmap.AbsolutePoseRefinementOptions()
+    refine_options.max_num_iterations = 500
+    refine_options.refine_extra_params = True
+    refine_options.refine_focal_length = True
+
+    points2D_all, points3D_all, cameras_all, rig_tvecs, rig_qvecs = [],[],[],[],[]
+    for pcr_img in tqdm(pcr_images):
+        kpq = io.get_keypoints(features_path, pcr_img)
+        kpq += 0.5  # COLMAP coordinates
+        kp_idx_to_3D = defaultdict(list)
+        kp_idx_to_3D_to_db = defaultdict(lambda: defaultdict(list))
+        db_names = parsers.parse_retrieval(retrievel_path)
+        num_matches = 0
+        db_ids = []
+        db_imgs = db_names[pcr_img]
+        for db_img in db_imgs:
+            if db_img not in db_name_to_id:
+                continue
+            db_ids.append(db_name_to_id[db_img])
+        for i, db_id in enumerate(db_ids):
+            image = reference_sfm.images[db_id]
+            if image.num_points3D() == 0:
+                continue
+            points3D_ids = np.array([p.point3D_id if p.has_point3D() else -1
+                                    for p in image.points2D])
+
+            matches, _ = io.get_matches(matches_path, pcr_img, image.name)
+            matches = matches[:-1][points3D_ids[matches[:-1, 1]] != -1] # some indexing errors of the last element in the matches 
+            num_matches += len(matches)
+            for idx, m in matches:
+                id_3D = points3D_ids[m]
+                kp_idx_to_3D_to_db[idx][id_3D].append(i)
+                # avoid duplicate observations
+                if id_3D not in kp_idx_to_3D[idx]:
+                    kp_idx_to_3D[idx].append(id_3D)
+        
+        idxs = list(kp_idx_to_3D.keys())
+        mkp_idxs = [i for i in idxs for _ in kp_idx_to_3D[i]]
+        mp3d_ids = [j for i in idxs for j in kp_idx_to_3D[i]]
+        msk = np.asarray(mkp_idxs) < len(kpq)
+        mkp_idxs = np.asarray(mkp_idxs)[msk]
+        mp3d_ids = np.asarray(mp3d_ids)[msk]
+        
+        points2D = kpq[mkp_idxs]
+        points3D = [reference_sfm.points3D[j].xyz for j in mp3d_ids]
+        colmap_img = query_sfm.images[pcr_images[qname][0]]
+        colmap_cam = query_sfm.cameras[colmap_img.camera_id]
+        points2D_all.append(points2D)
+        points3D_all.append(points3D)
+        cameras_all.append(colmap_cam)
+        rig_tvecs.append(pcr_images[pcr_img][2])
+        rig_qvecs.append(pcr_images[pcr_img][3])
     
+    ret = pycolmap.rig_absolute_pose_estimation(points2D_all, points3D_all, cameras_all, rig_qvecs, rig_tvecs, refinement_options = refine_options)
+    
+    # refine the camera poses based on refinement result
+    rig_center = -read_write_model.qvec2rotmat(ret['qvec']).T @ ret['tvec']
+    T_rig_to_world = np.eye(4)
+    T_rig_to_world[0:3, 0:3] = read_write_model.qvec2rotmat(ret['qvec']).T
+    T_rig_to_world[:3, 3] = rig_center
+    refined_camera_poses = []
+    for pcr_img in pcr_images:
+        # tvec, qvec -> rig frame
+        rig_coord = -read_write_model.qvec2rotmat(pcr_images[pcr_img][3]).T @ pcr_images[pcr_img][2]
+        rig_rot = read_write_model.qvec2rotmat(pcr_images[pcr_img][3]).T
+        rig_projection_center = np.append(rig_rot, rig_coord.reshape((3,1)), axis=1)
+        rig_projection_mtx = np.append(rig_projection_center, np.array([0,0,0,1]).reshape(1,4), axis = 0)
+        world_projection_mtx = T_rig_to_world @ rig_projection_mtx
+        world_rotmtx = world_projection_mtx[:3,:3]
+        qvec = read_write_model.rotmat2qvec(world_rotmtx.T)
+        tvec = - world_rotmtx.T @ world_projection_mtx[0:3,3]
+        refined_camera_poses.append([pcr_img, qvec, tvec])
+
+    if not output.exists(): output.touch()
+    with open(output, 'w') as f:
+        for pose in refined_camera_poses:
+            qvec = ' '.join(map(str, pose[1]))
+            coor = ' '.join(map(str, pose[2]))
+            f.write(f'{pose[0]} {qvec} {coor}\n')
+
+    return refined_camera_poses  
+
+
 def main(db_model,query_model,local_visual:bool):
     ##  Path define
     if isinstance(db_model, str):
@@ -290,6 +415,14 @@ def main(db_model,query_model,local_visual:bool):
                  db_model/'sfm_superpoint+superglue',
                  query_model/'refined_results.txt'
                  )
+    rig_pose_refiner(query_model/'pcr_results.txt', 
+                    query_model/'outputs/feats-superpoint-n4096-r1024.h5', 
+                    query_model/'qd_match.h5', 
+                    query_model/'qd_pairs.txt',
+                    sfm_model,
+                    db_model/'sfm_superpoint+superglue',
+                    query_model/'rig_refined_results.txt'
+                    )  
     
 
 if __name__ == '__main__':
