@@ -1,10 +1,12 @@
 from pathlib import Path
 from nbformat import read
 import numpy as np
-from hloc.utils import read_write_model, database, io
+from hloc import triangulation
+from hloc.utils import read_write_model, database, parsers
 import yaml
 from yaml import CLoader as Loader, CDumper as Dumper
 from teaser_pcr import parse_3d_corr
+import pycolmap
 
 def convert_bin_to_ply(input_path, output_path):
     ''' Convert bin to ply
@@ -49,48 +51,49 @@ def load_config(path):
 
 def triangulate_sub_model(reference_path, output_path):
     #### Generate new database for the sub model
-    import pycolmap
+    
     from hloc import triangulation
-    proj = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/ref/outputs')
-    reference_path = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp/ref/outputs/sfm_sift/')
-    sfm_path = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/ref/outputs/sfm_sift/')
+    proj = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub')
+    reference_path = Path('/home/liyzhu/ETHZ/3DV/outputs/superpoint+superglue_aachen/sfm_sift/')
+    sfm_path = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/sfm_superpoint+superglue/')
     new_database = proj/'sfm_superpoint+superglue/database.db'
-    new_proj = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/ref/')
-    reference = pycolmap.Reconstruction(reference_path)
-    image_ids = triangulation.create_db_from_model(reference, new_database, new_proj/'images')
-    triangulation.import_features(image_ids, new_database, proj/'feats-superpoint-n4096-r1024.h5')
-    triangulation.import_matches(image_ids, new_database, proj/'pairs-netvlad.txt', proj/'feats-superpoint-n4096-r1024_matches-superglue_pairs-netvlad.h5',
-                   None, False)
+    # new_proj = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/ref/')
+    # reference = pycolmap.Reconstruction(reference_path)
+    # image_ids = triangulation.create_db_from_model(reference, new_database, proj/'images')
+    # triangulation.import_features(image_ids, new_database, proj/'outputs/feats-superpoint-n4096-r1024.h5')
+    # triangulation.import_matches(image_ids, new_database, proj/'outputs/pairs-db-covis20.txt', proj/'outputs/feats-superpoint-n4096-r1024_matches-superglue_pairs-db-covis20.h5',
+    #                None, False)
     
-    if not sfm_path.exists():
-        sfm_path.mkdir(parents=True, exist_ok=True)
+    # if not sfm_path.exists():
+    #     sfm_path.mkdir(parents=True, exist_ok=True)
     
-    images = {}
-    open(sfm_path/'points3D.bin', "wb")
-    db = database.COLMAPDatabase.connect(new_database)
-    q_images = db.execute("SELECT * FROM images")
-    # q_cameras = db.execute("SELECT * FROM cameras")
-    #### generate bin files from  original data
-    ref_cameras, ref_images, _ = read_write_model.read_model(path=reference_path, ext='.bin')
-    image_ids = [q_image[0] for q_image in q_images]
-    for _, ref_image in ref_images.items():
-        if ref_image.id in image_ids:
-            kpts = io.get_keypoints(proj/"feats-superpoint-n4096-r1024.h5", ref_image.name)
-            images[ref_image.id] = read_write_model.Image(
-                id=ref_image.id, qvec=ref_image.qvec, tvec=ref_image.tvec,
-                camera_id=ref_image.camera_id, name=ref_image.name,
-                xys=kpts, point3D_ids=[])
+    # images = {}
+    # open(sfm_path/'points3D.bin', "wb")
+    # db = database.COLMAPDatabase.connect(new_database)
+    # q_images = db.execute("SELECT * FROM images")
+    # # q_cameras = db.execute("SELECT * FROM cameras")
+    # #### generate bin files from  original data
+    # ref_cameras, ref_images, _ = read_write_model.read_model(path=reference_path, ext='.bin')
+    # image_ids = [q_image[0] for q_image in q_images]
+    # for _, ref_image in ref_images.items():
+    #     if ref_image.id in image_ids:
+    #         kpts = io.get_keypoints(proj/"outputs/feats-superpoint-n4096-r1024.h5", ref_image.name)
+    #         images[ref_image.id] = read_write_model.Image(
+    #             id=ref_image.id, qvec=ref_image.qvec, tvec=ref_image.tvec,
+    #             camera_id=ref_image.camera_id, name=ref_image.name,
+    #             xys=kpts, point3D_ids=np.full((kpts.shape[0]),-1))
     
-    read_write_model.write_images_text(images, sfm_path/'images.bin')
-    read_write_model.write_cameras_text(ref_cameras, sfm_path/'cameras.bin')
+    # read_write_model.write_images_text(images, sfm_path/'images.txt')
+    # read_write_model.write_cameras_binary(ref_cameras, sfm_path/'cameras.bin')
     
     ### triangulate submodules
     sub_reference = pycolmap.Reconstruction(sfm_path)
     reconstruction = triangulation.run_triangulation(
-        sfm_path/'../sfm_superpoint+superglue',
+        sfm_path/'../sub_triagulate',
         proj/'sfm_superpoint+superglue/database.db',
-        Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/ref/images/'),
-        sub_reference)
+        Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/images/'),
+        sub_reference,
+        verbose=True)
 
 
 def get_image_from_name(ref_images, name):
@@ -264,6 +267,21 @@ def visualize_all(ref_path, query_path):
         vis_localized.append(cam)
     o3d.visualization.draw_geometries(vis_localized)
 
+def image_deleter(input_path, output_path, image_list):
+    images = read_write_model.read_images_binary(input_path/'images.bin')
+    reference_sfm = pycolmap.Reconstruction(input_path)
+    image_names = parsers.parse_image_list(image_list)
+    new_images = {i:images[i] for i in images if images[i].name not in image_names}
+    read_write_model.write_images_binary(new_images, output_path/'images.bin')
+    for i, image in images.items():
+        if image.name in image_names:
+            reference_sfm.deregister_image(i)
+    
+    reference_sfm.write_binary(str(output_path))
+
+            
+    
+
 
     
 if __name__ == "__main__":
@@ -278,10 +296,18 @@ if __name__ == "__main__":
     result = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query/1/localization_results.txt')
     # evaluate_results(ref,result)
 
+    # image_deleter(Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_reference'),
+                # Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/sfm_superpoint+superglue'),
+                # Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/image_names_path.txt'))
     
     # visualize_cameras(Path('/home/liyzhu/ETHZ/3DV/outputs/query_sequencies/1/refined_results.txt',),
     #         Path("/home/liyzhu/ETHZ/3DV/outputs/query_sequencies/1/outputs/sfm_superpoint+superglue"))
         
-    visualize_all(ref_path, query_path)
-
-    
+    # visualize_all(ref_path, query_path)
+    sfm_dir = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/sub_triagulate')
+    reference_model = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/sfm_superpoint+superglue')
+    image_dir = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/images')
+    pairs = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/outputs/pairs-db-covis20.txt')
+    features_path = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/outputs/feats-superpoint-n4096-r1024.h5')
+    match_path = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/outputs/feats-superpoint-n4096-r1024_matches-superglue_pairs-db-covis20.h5')
+    triangulation.main(sfm_dir, reference_model, image_dir, pairs, features_path, match_path, verbose=True)
