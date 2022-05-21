@@ -77,9 +77,9 @@ def main(dataset_path,
 
 
 if __name__ == "__main__":
-    dataset = Path('/cluster/project/infk/courses/252-0579-00L/group16/Aachen-Day-Night')
-    query_dir = Path('/cluster/project/infk/courses/252-0579-00L/group16/PCR/query_sequencies')
-    global_dir = Path('/cluster/project/infk/courses/252-0579-00L/group16/output/superpoint+superglue_aachen')
+    dataset = Path('/home/marvin/ETH_Study/3DV/3DV/datasets/aachen')
+    query_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query_sequencies')
+    global_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp/ref/outputs')
 
     for i in range(1,11):
         main(dataset, query_dir/str(i), global_dir, evaluation=True)
