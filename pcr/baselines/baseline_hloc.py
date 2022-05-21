@@ -12,6 +12,7 @@ import argparse
 def main(dataset_path,
          query_images_path,
          global_map_path,
+         ground_truth_sfm_path:Path = None,
          evaluation = True
          ):
     """
@@ -20,6 +21,7 @@ def main(dataset_path,
         dataset_path: Path to Aachen Day and Night
         query_images_path: Path to the image sequence to be localized
         global_map_path: Path to the pre-built Aachen global map
+        ground_truth_sfm_path: Path to the ground truth SFM model
     """
     # Paths
     # Aachen dataset
@@ -39,6 +41,12 @@ def main(dataset_path,
     reference_features = global_dir / 'feats-superpoint-n4096-r1024.h5' # reference superpoint features
     db_descriptors = global_dir/'global-feats-netvlad.h5'
 
+    # Ground Truth Map
+    ground_truth_sfm = None
+    if ground_truth_sfm_path == None:
+        ground_truth_sfm = reference_sfm / 'images.bin'
+    else:
+        ground_truth_sfm = ground_truth_sfm_path / 'images.bin'
 
 
     # pick one of the configurations for image retrieval, local feature extraction, and matching
@@ -72,14 +80,15 @@ def main(dataset_path,
 
     # Evaluate
     if evaluation:
-        eval_results = evaluate_results(reference_sfm / 'images.bin', localization_results)
+        eval_results = evaluate_results(ground_truth_sfm, localization_results)
         save_eva_results(eval_results, fpath=evaluation_result_path)
 
 
 if __name__ == "__main__":
-    dataset = Path('/home/marvin/ETH_Study/3DV/3DV/datasets/aachen')
-    query_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query_sequencies')
-    global_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp/ref/outputs')
+    dataset = Path('/cluster/project/infk/courses/252-0579-00L/group16/Aachen-Day-Night')
+    query_dir = Path('/cluster/project/infk/courses/252-0579-00L/group16/PCR/Aachen_sub/query_sequences_v2')
+    global_dir = Path('/cluster/project/infk/courses/252-0579-00L/group16/PCR/Aachen_sub/new_triangulation/outputs')
+    ground_truth_dir = Path('/cluster/project/infk/courses/252-0579-00L/group16/output/superpoint+superglue_aachen/sfm_superpoint+superglue')
 
-    for i in range(1,11):
-        main(dataset, query_dir/str(i), global_dir, evaluation=True)
+    for i in range(1,20):
+        main(dataset, query_dir/str(i), global_dir, ground_truth_dir, evaluation=True)

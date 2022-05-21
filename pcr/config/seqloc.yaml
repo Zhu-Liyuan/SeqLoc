@@ -1,21 +1,14 @@
 query:
-<<<<<<< HEAD
-  proj_dir: /home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query_sequencies/10
-=======
   proj_dir: /home/liyzhu/ETHZ/3DV/outputs/query_sequencies/7
->>>>>>> 10e6919d8e4bbdacf9d95808b1e74c462b4ba8ff
   retrieval_conf: "netvlad"
   feature_conf: "superpoint_aachen"
   matcher_conf: "superglue"
   local_visual: False
 database:
-<<<<<<< HEAD
   proj_dir: /home/marvin/ETH_Study/3DV/3DV/outputs/aachen/superpoint+superglue_aachen
 reconstruction:
   num_match_pairs: 20
 point_cloud_registration:
   min_percentage: 0.6
   min_num_2d_pts: 4
-=======
-  proj_dir: /home/liyzhu/ETHZ/3DV/outputs/superpoint+superglue_aachen
->>>>>>> 10e6919d8e4bbdacf9d95808b1e74c462b4ba8ff
+

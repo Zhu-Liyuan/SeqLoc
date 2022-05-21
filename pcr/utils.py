@@ -5,7 +5,7 @@ from hloc import triangulation
 from hloc.utils import read_write_model, database, parsers
 import yaml
 from yaml import CLoader as Loader, CDumper as Dumper
-from teaser_pcr import parse_3d_corr
+
 import pycolmap
 
 def convert_bin_to_ply(input_path, output_path):
@@ -100,6 +100,7 @@ def get_image_from_name(ref_images, name):
     # ref_images = read_write_model.read_images_binary(ref)
     for ref_image in ref_images.items():
         ref_name = ref_image[1].name.split('/')[-1]
+        # print(f"GET_IMAGE_FROM_NAME(): \nref_image_name={ref_name}\nname={name}")
         if name == ref_name:
             return ref_image
 
@@ -165,6 +166,7 @@ def visualize_cameras(localizations, sfm_model):
     
     """
     import open3d as o3d
+
     sfm_images = read_write_model.read_images_binary(sfm_model/'images.bin')
     sfm_cameras = read_write_model.read_cameras_binary(sfm_model/'cameras.bin')
     sfm_cam_vis, camera_vis = [], []
@@ -226,6 +228,7 @@ def visualize_cameras(localizations, sfm_model):
         
 def visualize_all(ref_path, query_path):
     import open3d as o3d
+    from pcr.teaser_pcr import parse_3d_corr
     pcd_1 = query_path/'outputs/point_cloud.ply'
     pcd_2 = ref_path/'point_cloud.ply'
     localizations = query_path/'refined_results.txt'
