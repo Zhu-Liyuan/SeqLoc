@@ -2,7 +2,7 @@ from pathlib import Path
 import argparse
 
 from ... import extract_features, match_features, triangulation, logger
-from ... import pairs_from_covisibility, pairs_from_retrieval, localize_sfm
+from ... import pairs_from_covisibility, pairs_from_retrieval, localize_sfm_nolog
 
 TEST_SLICES = [2, 3, 4, 5, 6, 13, 14, 15, 16, 17, 18, 19, 20, 21]
 
@@ -72,9 +72,10 @@ def run_slice(slice_, root, outputs, num_covis, num_loc):
     loc_matches = match_features.main(
         matcher_conf, loc_pairs, feature_conf['output'], outputs)
 
-    localize_sfm.main(
+    localize_sfm_nolog.main(
         ref_sfm,
-        dataset / 'queries/*_time_queries_with_intrinsics.txt',
+        # dataset / f'slice{slice_}/queries_with_intrinsics.txt',
+        query_list,
         loc_pairs,
         features,
         loc_matches,
