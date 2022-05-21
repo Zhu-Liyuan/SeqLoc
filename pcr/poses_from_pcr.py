@@ -180,8 +180,8 @@ def pose_refiner(
     refined_poses = []
     refine_options = pycolmap.AbsolutePoseRefinementOptions()
     refine_options.max_num_iterations = 500
-    refine_options.refine_extra_params = True
-    refine_options.refine_focal_length = True
+    refine_options.refine_extra_params = False
+    refine_options.refine_focal_length = False
 
     for pcr_img in tqdm(pcr_images):
         kpq = io.get_keypoints(features_path, pcr_img)
@@ -360,6 +360,7 @@ def rig_pose_refiner(
     ret = pycolmap.rig_absolute_pose_estimation(points2D_all, points3D_all, cameras_all, rig_qvecs, rig_tvecs, refinement_options = refine_options)
     
     # refine the camera poses based on refinement result
+    
     rig_center = -read_write_model.qvec2rotmat(ret['qvec']).T @ ret['tvec']
     T_rig_to_world = np.eye(4)
     T_rig_to_world[0:3, 0:3] = read_write_model.qvec2rotmat(ret['qvec']).T
@@ -415,14 +416,14 @@ def main(db_model,query_model,local_visual:bool):
                  db_model/'sfm_superpoint+superglue',
                  query_model/'refined_results.txt'
                  )
-    rig_pose_refiner(query_model/'pcr_results.txt', 
-                    query_model/'outputs/feats-superpoint-n4096-r1024.h5', 
-                    query_model/'qd_match.h5', 
-                    query_model/'qd_pairs.txt',
-                    sfm_model,
-                    db_model/'sfm_superpoint+superglue',
-                    query_model/'rig_refined_results.txt'
-                    )  
+    # rig_pose_refiner(query_model/'pcr_results.txt', 
+    #                 query_model/'outputs/feats-superpoint-n4096-r1024.h5', 
+    #                 query_model/'qd_match.h5', 
+    #                 query_model/'qd_pairs.txt',
+    #                 sfm_model,
+    #                 db_model/'sfm_superpoint+superglue',
+    #                 query_model/'rig_refined_results.txt'
+    #                 )  
     
 
 if __name__ == '__main__':

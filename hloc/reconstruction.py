@@ -97,9 +97,9 @@ def run_reconstruction(sfm_dir, database_path, image_dir, verbose=False):
     logger.info('Running 3D reconstruction...')
     sfm_opts = pycolmap.IncrementalMapperOptions()
     sfm_opts.num_threads = min(multiprocessing.cpu_count(), 16)
-    sfm_opts.ba_refine_extra_params = True
-    sfm_opts.ba_refine_focal_length = True
-    sfm_opts.ba_global_use_pba = True
+    sfm_opts.ba_refine_extra_params = False
+    sfm_opts.ba_refine_focal_length = False
+    sfm_opts.ba_global_use_pba = False
     with OutputCapture(verbose):
         with pycolmap.ostream():
             reconstructions = pycolmap.incremental_mapping(

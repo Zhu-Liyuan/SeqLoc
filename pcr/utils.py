@@ -5,7 +5,7 @@ from hloc import triangulation
 from hloc.utils import read_write_model, database, parsers
 import yaml
 from yaml import CLoader as Loader, CDumper as Dumper
-from teaser_pcr import parse_3d_corr
+from .teaser_pcr import parse_3d_corr
 import pycolmap
 
 def convert_bin_to_ply(input_path, output_path):
@@ -110,7 +110,7 @@ def angle_between_two_qvec(qvec1, qvec2):
     rmtx1 = read_write_model.qvec2rotmat(qvec1)
     rmtx2 = read_write_model.qvec2rotmat(qvec2)
     qvec = read_write_model.rotmat2qvec(rmtx1 @ rmtx2.T)
-    ang = np.arccos(qvec[0])/2
+    ang = np.arccos(qvec[0])
     return ang
 
 
@@ -268,6 +268,13 @@ def visualize_all(ref_path, query_path):
     o3d.visualization.draw_geometries(vis_localized)
 
 def image_deleter(input_path, output_path, image_list):
+    """extract images in a reconstruction
+
+    Args:
+        input_path (Path): Path to the 3 bin files
+        output_path (Path): the output folder 
+        image_list (Path): txt file with image names that you want to delete
+    """
     images = read_write_model.read_images_binary(input_path/'images.bin')
     reference_sfm = pycolmap.Reconstruction(input_path)
     image_names = parsers.parse_image_list(image_list)
@@ -296,18 +303,22 @@ if __name__ == "__main__":
     result = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query/1/localization_results.txt')
     # evaluate_results(ref,result)
 
-    # image_deleter(Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_reference'),
-                # Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/sfm_superpoint+superglue'),
-                # Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/image_names_path.txt'))
+    
     
     # visualize_cameras(Path('/home/liyzhu/ETHZ/3DV/outputs/query_sequencies/1/refined_results.txt',),
     #         Path("/home/liyzhu/ETHZ/3DV/outputs/query_sequencies/1/outputs/sfm_superpoint+superglue"))
         
     # visualize_all(ref_path, query_path)
-    sfm_dir = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/sub_triagulate')
-    reference_model = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/sfm_superpoint+superglue')
-    image_dir = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/images')
-    pairs = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/outputs/pairs-db-covis20.txt')
-    features_path = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/outputs/feats-superpoint-n4096-r1024.h5')
-    match_path = Path('/home/liyzhu/ETHZ/3DV/datasets/aachen_sub/outputs/feats-superpoint-n4096-r1024_matches-superglue_pairs-db-covis20.h5')
-    triangulation.main(sfm_dir, reference_model, image_dir, pairs, features_path, match_path, verbose=True)
+    
+    reference_model = Path('/home/marvin/ETH_Study/3DV/3DV/datasets/aachen_v2/reference/sfm_superpoint+superglue')
+    image_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub2/ref/images')
+    pairs = Path('/home/marvin/ETH_Study/3DV/3DV/datasets/aachen_v2/reference/pairs-db-covis20.txt')
+    features_path = Path('/home/marvin/ETH_Study/3DV/3DV/datasets/aachen_v2/reference/feats-superpoint-n4096-r1024.h5')
+    match_path = Path('/home/marvin/ETH_Study/3DV/3DV/datasets/aachen_v2/reference/feats-superpoint-n4096-r1024_matches-superglue_pairs-db-covis20.h5')
+    image_deleter(Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp/ref/outputs/sfm_sift'),
+                Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub2/ref/outputs/ref'),
+                Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub2/query_sequences_v2/img_list.txt'))
+    sub_reference = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub2/ref/outputs/ref')
+    
+    sfm_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub2/triangulation')
+    triangulation.main(sfm_dir, sub_reference, image_dir, pairs, features_path, match_path, verbose=True)

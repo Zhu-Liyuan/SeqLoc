@@ -72,14 +72,15 @@ def main(dataset_path,
 
     # Evaluate
     if evaluation:
-        eval_results = evaluate_results(reference_sfm / 'images.bin', localization_results)
+        gt = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp/ref/outputs/sfm_superpoint+superglue')
+        eval_results = evaluate_results(gt / 'images.bin', localization_results)
         save_eva_results(eval_results, fpath=evaluation_result_path)
 
 
 if __name__ == "__main__":
     dataset = Path('/home/marvin/ETH_Study/3DV/3DV/datasets/aachen')
-    query_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub/query_sequencies')
-    global_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_exp/ref/outputs')
+    query_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/aachen_sub2/query_sequences_v2')
+    global_dir = Path('/home/marvin/ETH_Study/3DV/3DV/outputs/new_triangulation/outputs')
 
-    for i in range(1,11):
+    for i in range(11,12):
         main(dataset, query_dir/str(i), global_dir, evaluation=True)

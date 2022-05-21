@@ -97,12 +97,13 @@ def main(db_model, query_model):
                         if ref_id == -1 or len(ref_id)<1 or ref_image == None:
                             continue
                         corr_3ds = np.append(corr_3ds, np.array(ref_image.point3D_ids[ref_id]))
-                           
+                        
+        corr_3ds = corr_3ds[corr_3ds!=-1]         
         if corr_3ds.size!=0: 
             uni_ids, uni_counts = np.unique(corr_3ds, return_counts=True)
             post_prob = max(uni_counts)/sum(uni_counts)
-            if post_prob > 0.6 :
-                ref_3d = uni_ids[uni_counts == max(uni_counts)]
+            if post_prob > 0.4 :
+                ref_3d = uni_ids[uni_counts == max(uni_counts)][0]
                 pairs_3d.append((q_id, int(ref_3d), post_prob))
                 
     
