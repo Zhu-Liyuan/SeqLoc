@@ -248,7 +248,7 @@ def pose_refiner(
                                             )
         refined_corr = - read_write_model.qvec2rotmat(refined_ret['qvec']).T @ refined_ret['tvec']
         pcr_corr = - read_write_model.qvec2rotmat(pcr_images[pcr_img][3]).T @ pcr_images[pcr_img][2]
-        if np.linalg.norm(refined_corr - pcr_corr) < 2.0:
+        if np.linalg.norm(refined_corr - pcr_corr) < 0.5:
             refined_poses.append([pcr_img, refined_ret['qvec'], refined_ret['tvec']])
         else:
             refined_poses.append([pcr_img, pcr_images[pcr_img][3], pcr_images[pcr_img][2]])
@@ -357,27 +357,39 @@ def rig_pose_refiner(
         rig_tvecs.append(pcr_images[pcr_img][2])
         rig_qvecs.append(pcr_images[pcr_img][3])
     
-    ret = pycolmap.rig_absolute_pose_estimation(points2D_all, points3D_all, cameras_all, rig_qvecs, rig_tvecs, refinement_options = refine_options)
+    rig_coord = [- read_write_model.qvec2rotmat(rig_qvecs[i]).T @ rig_tvecs[i] for i in range(0, len(rig_qvecs))]
+    rig_coord -= np.mean(rig_coord, axis=0)
+    rig_tvecs = [- read_write_model.qvec2rotmat(rig_qvecs[i]) @ rig_coord[i] for i in range(0, len(rig_qvecs))]
+        
+    ret = pycolmap.seq_absolute_pose_refiner(points2D_all, points3D_all, cameras_all, rig_qvecs, rig_tvecs, refinement_options = refine_options)
     
     # refine the camera poses based on refinement result
-    
     rig_center = -read_write_model.qvec2rotmat(ret['qvec']).T @ ret['tvec']
     T_rig_to_world = np.eye(4)
     T_rig_to_world[0:3, 0:3] = read_write_model.qvec2rotmat(ret['qvec']).T
     T_rig_to_world[:3, 3] = rig_center
     refined_camera_poses = []
-    for pcr_img in pcr_images:
+    rig_qvecs = ret['seq_qvecs']
+    rig_tvecs = ret['seq_tvecs']
+    for i, pcr_img in enumerate(pcr_images):
         # tvec, qvec -> rig frame
-        rig_coord = -read_write_model.qvec2rotmat(pcr_images[pcr_img][3]).T @ pcr_images[pcr_img][2]
-        rig_rot = read_write_model.qvec2rotmat(pcr_images[pcr_img][3]).T
+        rig_coord = -read_write_model.qvec2rotmat(rig_qvecs[i]).T @ rig_tvecs[i]
+        rig_rot = read_write_model.qvec2rotmat(rig_qvecs[i]).T
         rig_projection_center = np.append(rig_rot, rig_coord.reshape((3,1)), axis=1)
         rig_projection_mtx = np.append(rig_projection_center, np.array([0,0,0,1]).reshape(1,4), axis = 0)
         world_projection_mtx = T_rig_to_world @ rig_projection_mtx
         world_rotmtx = world_projection_mtx[:3,:3]
         qvec = read_write_model.rotmat2qvec(world_rotmtx.T)
         tvec = - world_rotmtx.T @ world_projection_mtx[0:3,3]
-        refined_camera_poses.append([pcr_img, qvec, tvec])
-
+        # refined_camera_poses.append([pcr_img, qvec, tvec])
+        
+        refined_coor = - read_write_model.qvec2rotmat(qvec).T @ tvec
+        pcr_coor = - read_write_model.qvec2rotmat(pcr_images[pcr_img][3]).T @ pcr_images[pcr_img][2]
+        if np.linalg.norm(refined_coor - pcr_coor) < 0.5:
+            refined_camera_poses.append([pcr_img, qvec, tvec])
+        else:
+            refined_camera_poses.append([pcr_img, pcr_images[pcr_img][3], pcr_images[pcr_img][2]])
+    
     if not output.exists(): output.touch()
     with open(output, 'w') as f:
         for pose in refined_camera_poses:
@@ -416,14 +428,14 @@ def main(db_model,query_model,local_visual:bool):
                  db_model/'sfm_superpoint+superglue',
                  query_model/'refined_results.txt'
                  )
-    # rig_pose_refiner(query_model/'pcr_results.txt', 
-    #                 query_model/'outputs/feats-superpoint-n4096-r1024.h5', 
-    #                 query_model/'qd_match.h5', 
-    #                 query_model/'qd_pairs.txt',
-    #                 sfm_model,
-    #                 db_model/'sfm_superpoint+superglue',
-    #                 query_model/'rig_refined_results.txt'
-    #                 )  
+    rig_pose_refiner(query_model/'refined_results.txt', 
+                    query_model/'outputs/feats-superpoint-n4096-r1024.h5', 
+                    query_model/'qd_match.h5', 
+                    query_model/'qd_pairs.txt',
+                    sfm_model,
+                    db_model/'sfm_superpoint+superglue',
+                    query_model/'rig_refined_results.txt'
+                    )  
     
 
 if __name__ == '__main__':
