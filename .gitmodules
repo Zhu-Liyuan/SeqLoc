@@ -14,6 +14,6 @@
 [submodule "third_party/TEASER-plusplus"]
 	path = third_party/TEASER-plusplus
 	url = https://github.com/MIT-SPARK/TEASER-plusplus
-[submodule "pycolmap"]
-	path = pycolmap
+[submodule "third_party/pycolmap"]
+	path = third_party/pycolmap
 	url = https://github.com/Zhu-Liyuan/pycolmap
