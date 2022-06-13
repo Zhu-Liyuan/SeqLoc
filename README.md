@@ -75,7 +75,32 @@ python -m pcr.seqloc_pipeline --config="pcr/config/seqloc.yaml"
 ```
 **Don't forget to change the Path in [seqloc.yaml](https://github.com/Zhu-Liyuan/SeqLoc/blob/zly/pcr/config/seqloc.yaml) !!!**
 
+## Data Structure for query and reference
 
+```Shell
+├── data
+    ├── Outputs
+        ├── database.db
+        ├── point_feat_*.h5(point features)
+        ├── matches_*.h5(feature matches)
+        ├── flobal_feats_*.h5
+        ├── pairs_netlad.txt
+        ├── point_cloud.ply
+        ├── sfm
+            ├── points3D.bin
+            ├── cameras.bin
+            ├── images.bin
+            ├── database.bin
+            ├── models
+    ├── images
+        ├── Image1.JPG
+        ├── Image2.JPG
+        .
+        .
+        .
+        ├── ImageX.JPG
+        
+```
 
 ## Some useful [python scripts](https://github.com/colmap/colmap/tree/dev/scripts/python)  to manipulate colmap database and project files 
 [database.py](https://github.com/colmap/colmap/blob/dev/scripts/python/database.py) - To manipulate colmap database. 
