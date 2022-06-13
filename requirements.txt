@@ -7,6 +7,5 @@ matplotlib
 plotly
 scipy
 h5py
-pycolmap>=0.1.0
 kornia
 open3d==0.10.0.0
