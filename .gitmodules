@@ -1,0 +1,19 @@
+[submodule "third_party/d2net"]
+	path = third_party/d2net
+	url = https://github.com/mihaidusmanu/d2-net.git
+[submodule "third_party/SuperGluePretrainedNetwork"]
+	path = third_party/SuperGluePretrainedNetwork
+	url = https://github.com/skydes/SuperGluePretrainedNetwork.git
+	branch = fix-memory
+[submodule "third_party/deep-image-retrieval"]
+	path = third_party/deep-image-retrieval
+	url = https://github.com/naver/deep-image-retrieval.git
+[submodule "third_party/r2d2"]
+	path = third_party/r2d2
+	url = https://github.com/naver/r2d2.git
+[submodule "third_party/TEASER-plusplus"]
+	path = third_party/TEASER-plusplus
+	url = https://github.com/MIT-SPARK/TEASER-plusplus
+[submodule "third_party/pycolmap"]
+	path = third_party/pycolmap
+	url = https://github.com/Zhu-Liyuan/pycolmap

@@ -1,0 +1,13 @@
+project: 
+  proj_path: /home/marvin/ETH_Study/3DV/3DV/datasets/test1
+  image_path: images
+  output_path: outputs
+  reference_path: ref
+  query_path: query
+  query_ref_match: q_ref_match
+  retrieval_conf: netvlad
+  feature_conf: superpoint_aachen
+  matcher_conf: superglue
+  NOISE_BOUND: 0.02
+
+  

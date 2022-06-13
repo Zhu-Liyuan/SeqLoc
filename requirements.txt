@@ -1,0 +1,11 @@
+torch>=1.1
+torchvision>=0.3
+numpy
+opencv-python
+tqdm>=4.36.0
+matplotlib
+plotly
+scipy
+h5py
+kornia
+open3d==0.10.0.0
