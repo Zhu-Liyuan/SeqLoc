@@ -1,7 +1,7 @@
 # SeqLoc: Visual Localization with an Image Sequence
 ### ****Student Project @ 3DV ETH Zurich 2022****
 
-Studnets: **Liyuan Zhu, Jingyan Li, Han Sun**
+Students: **Liyuan Zhu, Jingyan Li, Han Sun**
 
 Supervisors: **Iro Armeni**, **Daniel Barath**
 
