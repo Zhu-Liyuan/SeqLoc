@@ -5,6 +5,8 @@ Students: **Liyuan Zhu, Jingyan Li, Han Sun**
 
 Supervisors: **Iro Armeni**, **Daniel Barath**
 
+**[Poster](https://github.com/Zhu-Liyuan/SeqLoc/blob/main/doc/poster.pdf)** | **Report**
+
 In **SeqLoc**, we propose localization with a short image sequence to leverage the redundant information in the sequence. Instead of establishing 2D-3D correspondences, we solve the pose estimation problem by point cloud registration. The proposed method also provides a simple and efficient 3D-3D correspondence generation algorithm to solve the transformation between two SfM-based point clouds. On top of the point cloud registration based localization, we add a global bundle adjustment module to refine the pose estimate with additional constraints from the sequence.
 
 
