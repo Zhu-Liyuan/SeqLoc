@@ -3,7 +3,7 @@
 
 Students: **Liyuan Zhu, Jingyan Li, Han Sun**
 
-Supervisors: **Iro Armeni**, **Daniel Barath**
+Supervisors: **[Iro Armeni](https://ir0.github.io/)**, **[Daniel Barath](https://people.inf.ethz.ch/dbarath/)**
 
 **[Poster](https://github.com/Zhu-Liyuan/SeqLoc/blob/main/doc/poster.pdf)** | **Report**
 
