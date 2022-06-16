@@ -14,7 +14,7 @@ In **SeqLoc**, we propose localization with a short image sequence to leverage t
 
 <p align="center">
   <img src="https://github.com/Zhu-Liyuan/SeqLoc/blob/zly/doc/poster1.png" width="750"/>
-  <br ><em>Proposed pipeline(adpated from hloc)</em>
+  <br ><em>Proposed pipeline(adapted from hloc)</em>
 </p>
 
 #### Generation of 3D-3D correspondences
